@@ -35,9 +35,23 @@
 #define GATEWAYDEFINES_H_
 
 
-/*=================================
+/*============================================
+ *  Debug Condition
+ ============================================*/
+
+#define DEBUG_MQTT
+
+
+#ifdef DEBUG_MQTT
+  #define D_MQTT(...)  printf(__VA_ARGS__)
+#else
+  #define D_MQTT(...)
+#endif
+
+/*===========================================
  *   Gateway Control Constants
- ==================================*/
+ ===========================================*/
+
 #define BROKER_HOST_NAME  "localhost"
 #define BROKER_PORT       1883
 

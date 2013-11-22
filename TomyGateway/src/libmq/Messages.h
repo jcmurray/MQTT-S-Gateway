@@ -419,6 +419,7 @@ public:
     void setFrame(uint8_t* data, uint8_t len);
     void setFrame(XBResponse* resp);
     uint8_t* getData();
+    uint8_t  getDataLength();
 
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);

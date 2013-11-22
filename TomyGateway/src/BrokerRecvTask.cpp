@@ -85,8 +85,6 @@ void BrokerRecvTask::run(){
 		int activity =  select( maxSock + 1 , &readfds , NULL , NULL , &timeout);
 
 		if (activity > 0){
-			cout << "BrokerRecvTask  receive Packet"  << endl;
-
 			for( int i = 0; i < clist->getClientCount(); i++){
 				if((*clist)[i]){
 					if((*clist)[i]->getSocket()->isValid()){
@@ -118,36 +116,47 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 	if(cnt){
 		switch(buffer[0] & 0xf0){
 			case MQTT_TYPE_PUBACK:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PUBACK\n");
 				MQTTPubAck* puback = new MQTTPubAck();
 				puback->deserialize(buffer);
 				clnode->setBrokerRecvMessage(puback);
 			}
 				break;
 			case MQTT_TYPE_PUBLISH:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PUBLISH\n");
+
 				MQTTPublish* publish = new MQTTPublish();
 				publish->deserialize(buffer);
 				clnode->setBrokerRecvMessage(publish);
 			}
 				break;
 			case MQTT_TYPE_SUBACK:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_SUBACK\n");
+
 				MQTTSubAck* suback = new MQTTSubAck();
 				suback->deserialize(buffer);
 				clnode->setBrokerRecvMessage(suback);
 			}
 				break;
 			case MQTT_TYPE_PINGRESP:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PINGRESP\n");
+
 				MQTTPingResp* pingresp = new MQTTPingResp();
 				pingresp->deserialize(buffer);
 				clnode->setBrokerRecvMessage(pingresp);
 			}
 				break;
 			case MQTT_TYPE_UNSUBACK:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_UNSUBACK\n");
+
 				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 				unsuback->deserialize(buffer);
 				clnode->setBrokerRecvMessage(unsuback);
 			}
 				break;
 			case MQTT_TYPE_CONNACK:{
+				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_CONNACK\n");
+
 				MQTTConnAck* connack = new MQTTConnAck();
 				connack->deserialize(buffer);
 				clnode->setBrokerRecvMessage(connack);

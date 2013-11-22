@@ -6,7 +6,6 @@
  *    Debug Condition
  ==================================*/
 #define DEBUG_ZBEESTACK
-#define DEBUG_MQTTS
 
 /*=================================
  *    Debug Print functions

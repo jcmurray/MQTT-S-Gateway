@@ -130,47 +130,47 @@ void GatewayControlTask::run(){
 			MQTTSnMessage* msg = clnode->getClientRecvMessage();
 			
 			if(msg->getType() == MQTTSN_TYPE_PUBLISH){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_PUBLISH" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBLISH\n");
 				handleSnPublish(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_SUBSCRIBE){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_SUBSCRIBE" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_SUBSCRIBE\n");
 				handleSnSubscribe(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_UNSUBSCRIBE){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_UNSUBSCRIBE" << endl;
+				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_UNSUBSCRIBE\n");
 				handleSnUnsubscribe(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_PINGREQ){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_PINGREQ" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PINGREQ\n");
 				handleSnPingReq(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_PUBACK){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_PUBACK" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBACK\n");
 				handleSnPubAck(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_CONNECT){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_CONNECT" << endl;
+				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_CONNECT\n");
 				handleSnConnect(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_WILLTOPIC){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_WILLTOPIC" << endl;
+				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_WILLTOPIC\n");
 				handleSnWillTopic(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_WILLMSG){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_WILLMSG" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_WILLMSG\n");
 				handleSnWillMsg(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_DISCONNECT){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_DISCONNECT" << endl;
+				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_DISCONNECT\n");
 				handleSnDisconnect(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_REGISTER){
-				cout << "GatewayControlTask acquire MQTTSN_TYPE_REGISTER" << endl;
+				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_REGISTER\n");
 				handleSnRegister(ev, clnode, msg);
 
 			}else{
-				fprintf(stdout, "%s   %s\n", currentDateTime(), "Irregular ClientRecvMessage");
+				D_MQTT("%s   Irregular ClientRecvMessage\n", currentDateTime());
 			}
 		}
 		/*------   Message form Broker      ---------*/
@@ -180,29 +180,29 @@ void GatewayControlTask::run(){
 			MQTTMessage* msg = clnode->getBrokerRecvMessage();
 			
 			if(msg->getType() == MQTT_TYPE_PUBACK){
-				cout << "GatewayControlTask acquire MQTT_TYPE_PUBACK" << endl;
+				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PUBACK\n");
 				handlePuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_PINGRESP){
-				cout << "GatewayControlTask acquire MQTT_TYPE_PINGRESP" << endl;
+				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PINGRESP\n");
 				handlePingresp(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_SUBACK){
-				cout << "GatewayControlTask acquire MQTT_TYPE_SUBACK" << endl;
+				D_MQTT("GatewayControlTask acquire MQTT_TYPE_SUBACK\n");
 				handleSuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_UNSUBACK){
-				cout << "GatewayControlTask acquire MQTT_TYPE_UNSUBACK" << endl;
+				D_MQTT("GatewayControlTask acquire MQTT_TYPE_UNSUBACK\n");
 				handleUnsuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_CONNACK){
-				cout << "GatewayControlTask acquire MQTT_TYPE_CONNACK" << endl;
+				D_MQTT("GatewayControlTask acquire MQTT_TYPE_CONNACK\n");
 				handleConnack(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_PUBLISH){
 				handlePublish(ev, clnode, msg);
 			}else{
-				fprintf(stdout, "%s   %s\n", currentDateTime(), "Irregular BrokerRecvMessage");
+				D_MQTT("%s   Irregular BrokerRecvMessage\n", currentDateTime());
 			}
 		}
 
@@ -231,7 +231,7 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 		mqMsg->setRetain();
 	}
 	mqMsg->setQos(publish->getQos());
-	mqMsg->setPayload(publish->getBodyPtr() , publish->getBodyLength());
+	mqMsg->setPayload(publish->getData() , publish->getDataLength());
 
 	clnode->setBrokerSendMessage(mqMsg);
 
@@ -309,7 +309,6 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 			_res->getBrokerSendQue()->post(ev1);       // Send MQTTSubscribe
 
 		}else{     //  Predefined TopicID
-			cout << "GatewayControlTask  acquire snSubscribe predefinedId" << endl;
 			MQTTSnSubAck* sSuback = new MQTTSnSubAck();
 			if(sSubscribe->getQos()){       // QoS <> 0
 				sSuback->setQos(sSubscribe->getQos());
@@ -326,8 +325,6 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 
 				Event* evsuback = new Event();
 				evsuback->setClientSendEvent(clnode);
-
-				cout << "GatewayControlTask  post suback" << endl;
 				_res->getClientSendQue()->post(evsuback);
 			}
 
@@ -345,15 +342,13 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 
 				Event *evpub = new Event();
 				evpub->setClientSendEvent(clnode);
-
-				cout << "GatewayControlTask  post publish unix time" << "0x" << pub << endl;
 				_res->getClientSendQue()->post(evpub);
 			}
 		}
 
 	}else{         // Irregular TopicIdType
 		delete subscribe;
-		fprintf(stdout, "%s   %s\n", currentDateTime(), "Irregular TopicType");
+		D_MQTT( "%s   Irregular TopicType\n", currentDateTime());
 	}
 	delete sSubscribe;
 }
@@ -379,7 +374,7 @@ MQTTSnUnsubscribe* sUnsubscribe = new MQTTSnUnsubscribe();
 				unsubscribe->setTopicName(sUnsubscribe->getTopicName());          // prepare UNSUBSCRIBE
 
 			}else{  // undefined TopicId
-				fprintf(stdout, "%s   %s\n", currentDateTime(), "can't create a Topic");
+				D_MQTT("%s   can't create a Topic\n", currentDateTime());
 				goto irrUnsub;
 			}
 		}
@@ -392,7 +387,8 @@ MQTTSnUnsubscribe* sUnsubscribe = new MQTTSnUnsubscribe();
 
 
 	}else{                 // Irregular TopicIdType
-		fprintf(stdout, "%s   %s\n", currentDateTime(), "Irregular TopicType");
+		D_MQTT( "%s   Irregular TopicTypes\n", currentDateTime());
+
 irrUnsub:	MQTTSnUnsubAck* sUnsuback = new MQTTSnUnsubAck();
 		sUnsuback->setMsgId(sUnsubscribe->getMsgId());
 

@@ -533,8 +533,6 @@ void MQTTSnRegister::absorb(XBResponse* src){
 }
 
 void MQTTSnRegister::absorb(MQTTSnMessage* src){
-	//setMessageLength(src->getMessageLength());
-	//setBody( src->getBodyPtr(), src->getBodyLength());
 	_topicId = getUint16((uint8_t*)(src->getBodyPtr()));
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +2));
 	_topicName = UTFString((uint8_t*)(src->getBodyPtr() + 4));
@@ -605,7 +603,7 @@ uint8_t MQTTSnPublish::getTopicType(){
 }
 
 uint8_t MQTTSnPublish::getQos(){
-    return _flags & (MQTTSN_FLAG_QOS_1 | MQTTSN_FLAG_QOS_2);
+    return (_flags & (MQTTSN_FLAG_QOS_1 | MQTTSN_FLAG_QOS_2) >> 5);
 }
 
 void MQTTSnPublish::setQos(uint8_t qos){
@@ -631,10 +629,6 @@ void MQTTSnPublish::setTopicIdType(uint8_t type){
 	case 1:
 		_flags &= 0x9f;
 		_flags |= 0x01;
-		break;
-	case 2:
-		_flags &= 0x9f;
-		_flags |= 0x02;
 		break;
 	default:
 		break;
@@ -671,6 +665,10 @@ void MQTTSnPublish::setData(uint8_t* data, uint8_t len){
 
 uint8_t*  MQTTSnPublish::getData(){
     return (uint8_t*)(getBodyPtr() + 5);
+}
+
+uint8_t  MQTTSnPublish::getDataLength(){
+	return getBodyLength() -5;
 }
 
 void MQTTSnPublish::setFrame(uint8_t* data, uint8_t len){
@@ -729,8 +727,6 @@ uint8_t MQTTSnPubAck::getReturnCode(){
 }
 
 void MQTTSnPubAck::absorb(MQTTSnMessage* src){
-	//setMessageLength(src->getMessageLength());
-	//setBody( src->getBodyPtr(), src->getBodyLength());
 	MQTTSnMessage::absorb(src);
 }
 
@@ -949,8 +945,6 @@ void MQTTSnUnsubscribe::absorb(XBResponse* src){
 }
 
 void MQTTSnUnsubscribe::absorb(MQTTSnMessage* src){
-	//setMessageLength(src->getMessageLength());
-	//setBody( src->getBodyPtr(), src->getBodyLength());
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +1));
 	_flags = src->getBodyPtr()[0];
 	_topic = UTFString((uint8_t*)(src->getBodyPtr() + 3));
@@ -1186,11 +1180,11 @@ void MQTTMessage::setQos(uint8_t qos){
 		_flags &= 0xf9;
 		break;
 	case 1:
-		_flags &= 0xfa;
+		_flags &= 0xf9;
 		_flags |= 0x02;
 		break;
 	case 2:
-		_flags &= 0xfa;
+		_flags &= 0xf9;
 		_flags |= 0x04;
 			break;
 	default:

@@ -85,36 +85,49 @@ void BrokerSendTask::run(){
 		}
 
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBLISH\n");
+
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBACK\n");
+
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PINGREQ\n");
+
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
 			delete ev;
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_SUBSCRIBE\n");
+
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_UNSUBSCRIBE\n");
+
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_CONNECT\n");
+
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
-			cout << "BrokerSendTask connect  0" << endl;
 			length = msg->serialize(buffer);
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
+			D_MQTT("BrokerSendTask acquire MQTT_TYPE_DISCONNECT\n");
+
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
 		}
