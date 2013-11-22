@@ -1,6 +1,6 @@
 MQTT-S Gateway over XBee 
 ======
-*  A gateway for MQTT-S  is under developing.
+  A gateway for MQTT-S  is under developing.
 
 Supported functions
 -------------------
@@ -14,7 +14,9 @@ Supported functions
 Usage
 ------
 ####Minimum requirements
-  Three XBee S2 devices,  one coordinator, one gateway and one client.
+*  Three XBee S2 devices,  one coordinator, one gateway and one client.
+*  Linux  ( Windows can not execute this program.)
+*  pthread, rt liblaries to be linked.
 
 #### Start Gateway  
     argument 1: Device which XBee dongle connected
