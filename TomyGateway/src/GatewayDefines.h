@@ -41,7 +41,9 @@
 
 #define DEBUG_MQTT
 
-
+/*============================================
+   Debug Print Definition
+ ============================================*/
 #ifdef DEBUG_MQTT
   #define D_MQTT(...)  printf(__VA_ARGS__)
 #else

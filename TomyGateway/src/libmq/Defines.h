@@ -8,7 +8,7 @@
 #define DEBUG_ZBEESTACK
 
 /*=================================
- *    Debug Print functions
+      Debug Print functions
  ==================================*/
 #ifdef  DEBUG_ZBEESTACK
   #define D_ZBEESTACK(...)  printf(__VA_ARGS__)

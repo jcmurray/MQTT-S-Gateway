@@ -36,3 +36,14 @@ XBee configurations
     [AP] 2   API Enable
 
   Other values are defaults.
+  
+  
+  
+  
+  
+###Contact
+
+
+* Author:    Tomoaki YAMAGUCHI
+* Email:     tomoaki@tomy-tech.com
+
