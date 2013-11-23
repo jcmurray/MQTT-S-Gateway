@@ -13,25 +13,25 @@ Supported functions
 
 Usage
 ------
-####Minimum requirements
+####1) Minimum requirements
 *  Three XBee S2 devices,  one coordinator, one gateway and one client.
 *  Linux  ( Windows can not execute this program.)
 *  pthread, rt liblaries to be linked.
 
-#### Build
+####2) How to Build
 
     $ make
     
-    Makefile is in TomyGateway directory.
-    TomyGateway (Executable) is created in Build directory.
+  Makefile is in TomyGateway directory.
+  TomyGateway (Executable) is created in Build directory.
     
-#### Start Gateway  
+####3)  Start Gateway  
     
     $ TomyGateway /dev/ttyUSB0  ["localhost"] [1883]
     
-    argument 1: Device which XBee dongle connected
-    argument 2: Broker IP Address ( default value "localhost" )
-    argument 3: Port No  ( default value 1883 )
+  argument 1: Device which XBee dongle connected
+  argument 2: Broker IP Address ( default value "localhost" )
+  argument 3: Port No  ( default value 1883 )
          
 XBee configurations
 ----------------------
