@@ -1,6 +1,6 @@
 MQTT-S Gateway over XBee 
 ======
-  A gateway for MQTT-S  is under developing.
+  _A gateway for MQTT-S  is under developing._
 
 Supported functions
 -------------------
@@ -22,16 +22,16 @@ Usage
 
     $ make
     
-  Makefile is in TomyGateway directory.
+  Makefile is in TomyGateway directory.  
   TomyGateway (Executable) is created in Build directory.
     
 ####3)  Start Gateway  
     
     $ TomyGateway /dev/ttyUSB0  ["localhost"] [1883]
     
-  arg 1: Device which XBee dongle connected 
-  arg 2: Broker IP Address ( default value "localhost" ) 
-  arg 3: Port No  ( default value 1883 ) 
+  arg 1: Device which XBee dongle connected  
+  arg 2: Broker IP Address ( default value "localhost" )  
+  arg 3: Port No  ( default value 1883 )  
          
 XBee configurations
 ----------------------
