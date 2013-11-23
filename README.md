@@ -1,6 +1,7 @@
 MQTT-S Gateway over XBee 
 ======
-  _A gateway for MQTT-S  is under developing._
+  _A gateway for MQTT-S  is under developing._  
+  _Current version is just for reference, but can run._
 
 Supported functions
 -------------------
@@ -29,9 +30,9 @@ Usage
     
     $ TomyGateway /dev/ttyUSB0  ["localhost"] [1883]
     
-  arg 1: Device which XBee dongle connected  
-  arg 2: Broker IP Address ( default value "localhost" )  
-  arg 3: Port No  ( default value 1883 )  
+  argv 1: Device which XBee dongle connected  
+  argv 2: Broker IP Address ( default value "localhost" )  
+  argv 3: Port No  ( default value 1883 )  
          
 XBee configurations
 ----------------------
