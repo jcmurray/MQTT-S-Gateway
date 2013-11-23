@@ -29,9 +29,9 @@ Usage
     
     $ TomyGateway /dev/ttyUSB0  ["localhost"] [1883]
     
-  argument 1: Device which XBee dongle connected
-  argument 2: Broker IP Address ( default value "localhost" )
-  argument 3: Port No  ( default value 1883 )
+  arg 1: Device which XBee dongle connected 
+  arg 2: Broker IP Address ( default value "localhost" ) 
+  arg 3: Port No  ( default value 1883 ) 
          
 XBee configurations
 ----------------------
