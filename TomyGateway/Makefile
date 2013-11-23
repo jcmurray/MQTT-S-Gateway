@@ -22,7 +22,7 @@ LDFLAGS +=
 LIBS +=
 LDADD := -lpthread -lrt
 
-CXXFLAGS := -Wall -Wextra -O3
+CXXFLAGS := -Wall -O3
 
 OUTDIR := Build
 
