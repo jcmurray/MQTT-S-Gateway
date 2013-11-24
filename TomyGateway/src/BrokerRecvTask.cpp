@@ -107,16 +107,18 @@ void BrokerRecvTask::run(){
      Recv socket & Create MQTT Messages
  -----------------------------------------*/
 void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
+
 	uint8_t buffer[SOCKET_MAXBUFFER_LENGTH];
 	memset(buffer, 0, SOCKET_MAXBUFFER_LENGTH);
 	RemainingLength remLen;
-	bool match = true;
 
 	int cnt = clnode->getSocket()->recv(buffer, SOCKET_MAXBUFFER_LENGTH);
+
 	if(cnt){
 		switch(buffer[0] & 0xf0){
 			case MQTT_TYPE_PUBACK:{
 				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PUBACK\n");
+
 				MQTTPubAck* puback = new MQTTPubAck();
 				puback->deserialize(buffer);
 				clnode->setBrokerRecvMessage(puback);
@@ -163,16 +165,12 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			}
 				break;
 			default:
-				match = false;
+				return;
 				break;
 		}
-		if(match){
-			Event* ev = new Event();
-			ev->setBrokerRecvEvent(clnode);
-			_res->getGatewayEventQue()->post(ev);
-		}
-	}else{
-		clnode->getSocket()->disconnect();
+		Event* ev = new Event();
+		ev->setBrokerRecvEvent(clnode);
+		_res->getGatewayEventQue()->post(ev);
 	}
 }
 

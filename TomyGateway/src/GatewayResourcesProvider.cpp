@@ -83,13 +83,29 @@ ClientNode::ClientNode(){
 
 	_mqttConnect = 0;
 
-	_pubAck = 0;
-	_subAck = 0;
+	_waitedPubAck = 0;
+	_waitedSubAck = 0;
 }
 
 ClientNode::~ClientNode(){
 	_socket.disconnect();
 	delete _topics;
+}
+
+void ClientNode::setWaitedPubAck(MQTTSnPubAck* msg){
+	_waitedPubAck = msg;
+}
+
+void ClientNode::setWaitedSubAck(MQTTSnSubAck* msg){
+	_waitedSubAck = msg;
+}
+
+MQTTSnPubAck* ClientNode::getWaitedPubAck(){
+	return _waitedPubAck;
+}
+
+MQTTSnSubAck* ClientNode::getWaitedSubAck(){
+	return _waitedSubAck;
 }
 
 uint16_t ClientNode::getNextMessageId(){

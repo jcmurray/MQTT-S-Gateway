@@ -165,7 +165,7 @@ Topic* Topics::createTopic(UTFString* topic){
     if (!getTopic(topic)){
         if ( _topics.size() < MAX_TOPIC_COUNT){
         	Topic* tp = new Topic(*topic);
-        	tp->setTopicId(getNextId());
+        	tp->setTopicId(getNextTopicId());
         	_topics.push_back(tp);
         	return tp;
         }else{
@@ -176,12 +176,11 @@ Topic* Topics::createTopic(UTFString* topic){
     }
 }
 
-uint16_t Topics::getNextId(){
-	if(++_topicId == MQTTSN_TOPICID_NORMAL){
-		return ++_topicId;
-	}else{
-		return _topicId;
+uint16_t Topics::getNextTopicId(){
+	if(++_topicId <  MQTTSN_TOPICID_NORMAL){
+		_topicId = MQTTSN_TOPICID_NORMAL;
 	}
+	return _topicId;
 }
 
 Topic* Topics::match(UTFString* topic){

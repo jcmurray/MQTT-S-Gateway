@@ -78,7 +78,7 @@ public:
       ~Topics();
       Topic*    createTopic(UTFString* topic);
       uint16_t  getTopicId(UTFString* topic);
-      uint16_t  getNextId();
+      uint16_t  getNextTopicId();
       Topic*    getTopic(UTFString* topic);
       Topic*    getTopic(uint16_t topicId);
       Topic*    match(UTFString* topic);

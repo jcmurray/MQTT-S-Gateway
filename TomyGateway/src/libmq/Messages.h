@@ -472,7 +472,7 @@ public:
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);
 
-private:
+protected:
     uint16_t _topicId;
     uint8_t  _flags;
     uint16_t _msgId;
@@ -499,9 +499,10 @@ public:
 
 private:
     uint16_t _topicId;
-    uint8_t  _flags;
-    uint16_t _msgId;
-    uint8_t  _returnCode;
+	uint8_t  _flags;
+	uint16_t _msgId;
+	uint8_t  _returnCode;
+	UTFString _topicName;
  };
 
  /*=====================================
@@ -514,14 +515,10 @@ public:
     void setFlags(uint8_t flags);
     UTFString* getTopicName();
     uint16_t  getTopicId();
-
-    void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);
+    void absorb(MQTTSnMessage* src);
 private:
-    UTFString _topic;
-    uint16_t _topicId;
-    uint8_t _flags;
-    uint16_t _msgId;
+
  };
 
 /*=====================================

@@ -603,20 +603,13 @@ uint8_t MQTTSnPublish::getTopicType(){
 }
 
 uint8_t MQTTSnPublish::getQos(){
-    return (_flags & (MQTTSN_FLAG_QOS_1 | MQTTSN_FLAG_QOS_2) >> 5);
+    return ((_flags >> 5) & 0x03);
 }
 
 void MQTTSnPublish::setQos(uint8_t qos){
-	switch(qos){
-	case 0:
 		_flags &= 0x9f;
-		break;
-	case 1:
-		_flags &= 0x9f;
+		if( qos == 1){
 		_flags |= MQTTSN_FLAG_QOS_1;
-		break;
-	default:
-		break;
 	}
 	setFlags(_flags);
 }
@@ -747,10 +740,10 @@ MQTTSnSubscribe::~MQTTSnSubscribe(){
 }
 
 void MQTTSnSubscribe::setFlags(uint8_t flags){
-    _flags = flags  & 0xe3;
+    _flags = flags & 0xe3;
     if (_message){
-              getBodyPtr()[0] = _flags;
-      }
+		  getBodyPtr()[0] = _flags;
+    }
 }
 
 uint8_t MQTTSnSubscribe::getFlags(){
@@ -758,20 +751,13 @@ uint8_t MQTTSnSubscribe::getFlags(){
 }
 
 uint8_t MQTTSnSubscribe::getQos(){
-    return (_flags & (MQTTSN_FLAG_QOS_1 | MQTTSN_FLAG_QOS_2) >> 5);
+    return ((_flags >> 5) & 0x03);
 }
 
 void MQTTSnSubscribe::setQos(uint8_t qos){
-	switch(qos){
-	case 0:
-		_flags &= 0x9f;
-		break;
-	case 1:
-		_flags &= 0x9f;
+	_flags &= 0x9f;
+	if(qos == 1){
 		_flags |= MQTTSN_FLAG_QOS_1;
-		break;
-	default:
-		break;
 	}
 	setFlags(_flags);
 }
@@ -805,7 +791,7 @@ uint16_t MQTTSnSubscribe::getMsgId(){
     return _msgId;
 }
 void MQTTSnSubscribe::setTopicName(UTFString* data){
-    setMessageLength(6 + data->size());
+    setMessageLength(5 + data->size());
     allocate();
     data->serialize(getBodyPtr() + 3);
     setMsgId(_msgId);
@@ -843,7 +829,14 @@ void MQTTSnSubscribe::absorb(XBResponse* src){
 void MQTTSnSubscribe::absorb(MQTTSnMessage* src){
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +1));
 	_flags = src->getBodyPtr()[0];
-	_topicName = UTFString((uint8_t*)(src->getBodyPtr() + 3));
+	if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_SHORT ){
+		_topicName = UTFString((uint8_t*)(src->getBodyPtr() + 3));
+	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_PREDEFINED){
+		 _topicId = getUint16(getBodyPtr() +3);
+	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_NORMAL){
+		_topicId = getUint16(getBodyPtr() +3);
+	}
+
 	MQTTSnMessage::absorb(src);
 }
 /*=====================================
@@ -869,16 +862,9 @@ void MQTTSnSubAck::setFlags(uint8_t flags){
 }
 
 void MQTTSnSubAck::setQos(uint8_t qos){
-	switch(qos){
-	case 0:
-		_flags &= 0x9f;
-		break;
-	case 1:
-		_flags &= 0x9f;
+	_flags &= 0x9f;
+	if(qos == 1){
 		_flags |= MQTTSN_FLAG_QOS_1;
-		break;
-	default:
-		break;
 	}
 	setFlags(_flags);
 }
@@ -888,7 +874,7 @@ uint8_t MQTTSnSubAck::getFlags(){
 }
 
 uint8_t MQTTSnSubAck::getQos(){
-    return (_flags & (MQTTSN_FLAG_QOS_1 | MQTTSN_FLAG_QOS_2) >> 5);
+    return (_flags >> 5) & 0x03;
 }
 
 void MQTTSnSubAck::setTopicId(uint16_t id){
@@ -928,12 +914,12 @@ MQTTSnUnsubscribe::~MQTTSnUnsubscribe(){
 
 void MQTTSnUnsubscribe::setFlags(uint8_t flags){
     if (_message){
-		  getBodyPtr()[0] = flags & 0xe3;
+		  getBodyPtr()[0] = flags & 0x03;
     }
 }
 
 UTFString* MQTTSnUnsubscribe::getTopicName(){
-	return &_topic;
+	return &_topicName;
 }
 
 uint16_t MQTTSnUnsubscribe::getTopicId(){
@@ -945,10 +931,7 @@ void MQTTSnUnsubscribe::absorb(XBResponse* src){
 }
 
 void MQTTSnUnsubscribe::absorb(MQTTSnMessage* src){
-	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +1));
-	_flags = src->getBodyPtr()[0];
-	_topic = UTFString((uint8_t*)(src->getBodyPtr() + 3));
-	MQTTSnMessage::absorb(src);
+	MQTTSnSubscribe::absorb(src);
 }
 
 /*=====================================
@@ -1175,20 +1158,9 @@ void MQTTMessage::setType(uint8_t type){
 	_type = type;
 }
 void MQTTMessage::setQos(uint8_t qos){
-	switch(qos){
-	case 0:
-		_flags &= 0xf9;
-		break;
-	case 1:
-		_flags &= 0xf9;
+	_flags &= 0xf9;
+	if(qos){
 		_flags |= 0x02;
-		break;
-	case 2:
-		_flags &= 0xf9;
-		_flags |= 0x04;
-			break;
-	default:
-		break;
 	}
 }
 

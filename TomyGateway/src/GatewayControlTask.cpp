@@ -210,6 +210,9 @@ void GatewayControlTask::run(){
 	}
 }
 
+/*=======================================================
+                     Upstream
+ ========================================================*/
 
 /*-------------------------------------------------------
  *               Upstream MQTTSnPublish
@@ -243,35 +246,39 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 }
 
 /*-------------------------------------------------------
-                Upstream MQTTSnSubscribe
+                Upstream MQTTSnSubscribe  ?
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
-	Topics* topics = clnode->getTopics();
+
 	MQTTSnSubscribe* sSubscribe = new MQTTSnSubscribe();
 	MQTTSubscribe* subscribe = new MQTTSubscribe();
 	sSubscribe->absorb(msg);
 
+	uint8_t topicIdType = sSubscribe->getFlags() & 0x03;
+
 	subscribe->setMessageId(sSubscribe->getMsgId());
 
-	if(sSubscribe->getFlags() && MQTTSN_FLAG_DUP){
+	if(sSubscribe->getFlags() & MQTTSN_FLAG_DUP ){
 		subscribe->setDup();
 	}
-	if(sSubscribe->getFlags() && MQTTSN_FLAG_RETAIN){
+	if(sSubscribe->getFlags() & MQTTSN_FLAG_RETAIN){
 		subscribe->setRetain();
 	}
-	subscribe->setQos(subscribe->getQos());
+	subscribe->setQos(sSubscribe->getQos());
 
-	if(!((sSubscribe->getFlags() & 0x03 ) == MQTTSN_FLAG_TOPICID_TYPE_RESV)){     // Correct TopicIdType
-		if((sSubscribe->getFlags() & 0x03) == MQTTSN_FLAG_TOPICID_TYPE_NORMAL){
-			subscribe->setTopic(topics->getTopic(sSubscribe->getTopicId())->getTopicName(), sSubscribe->getQos());
+	if(topicIdType != MQTTSN_FLAG_TOPICID_TYPE_RESV){
+		/*----- TopicName ------*/
+		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_SHORT){
+			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
 
 			clnode->setBrokerSendMessage(subscribe);
 
 			Event* ev1 = new Event();
 			ev1->setBrokerSendEvent(clnode);
 			_res->getBrokerSendQue()->post(ev1);
-
-		}else if((sSubscribe->getFlags() & 0x03) == MQTTSN_FLAG_TOPICID_TYPE_SHORT){  //  Topic
+		}
+		/*----- TopicId ------*/
+		else if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_NORMAL){
 			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
 
 			if(!clnode->getTopics()->getTopic(sSubscribe->getTopicName())){   // New Topic
@@ -281,8 +288,10 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 					MQTTSnRegAck* sRegack = new MQTTSnRegAck();
 					sRegack->setMsgId(sSubscribe->getMsgId());
 					sRegack->setTopicId(tp->getTopicId());
-					Event* evregack = new Event();
+					sRegack->setReturnCode(MQTTSN_RC_ACCEPTED);
 					clnode->setClientSendMessage(sRegack);
+
+					Event* evregack = new Event();
 					evregack->setClientSendEvent(clnode);
 					_res->getClientSendQue()->post(evregack);  // Send RegAck Response
 
@@ -290,10 +299,11 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 					MQTTSnSubAck* sSuback = new MQTTSnSubAck();
 					sSuback->setMsgId(sSubscribe->getMsgId());
 					sSuback->setReturnCode(MQTTSN_RC_REJECTED_INVALID_TOPIC_ID);
-					Event* evregack = new Event();
 					clnode->setClientSendMessage(sSuback);
+
+					Event* evregack = new Event();
 					evregack->setClientSendEvent(clnode);
-					_res->getClientSendQue()->post(evregack);  // Send Suback Response
+					_res->getClientSendQue()->post(evregack);  // Send SubAck Response
 
 					fprintf(stdout, "%s   %s\n", currentDateTime(), "can't create a Topic");
 					delete sSubscribe;
@@ -344,12 +354,27 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 				evpub->setClientSendEvent(clnode);
 				_res->getClientSendQue()->post(evpub);
 			}
+			delete subscribe;
 		}
+		delete sSubscribe;
+		return;
 
-	}else{         // Irregular TopicIdType
-		delete subscribe;
-		D_MQTT( "%s   Irregular TopicType\n", currentDateTime());
 	}
+
+	/*-- Irregular TopicIdType --*/
+	if(sSubscribe->getMsgId()){
+		MQTTSnSubAck* sSuback = new MQTTSnSubAck();
+		sSuback->setMsgId(sSubscribe->getMsgId());
+		sSuback->setTopicId(sSubscribe->getTopicId());
+		sSuback->setReturnCode(MQTT_RC_REFUSED_IDENTIFIER_REJECTED);
+
+		clnode->setClientSendMessage(sSuback);
+
+		Event* evun = new Event();
+		evun->setClientSendEvent(clnode);
+		_res->getClientSendQue()->post(evun);  // Send SUBACK to Client
+	}
+	delete subscribe;
 	delete sSubscribe;
 }
 
@@ -362,43 +387,44 @@ MQTTSnUnsubscribe* sUnsubscribe = new MQTTSnUnsubscribe();
 	MQTTUnsubscribe* unsubscribe = new MQTTUnsubscribe();
 	sUnsubscribe->absorb(msg);
 
+	uint8_t topicIdType = sUnsubscribe->getFlags() & 0x03;
+
 	unsubscribe->setMessageId(sUnsubscribe->getMsgId());
 
-	if(!(sUnsubscribe->getFlags() && MQTTSN_FLAG_TOPICID_TYPE_RESV)){     // Correct TopicId TopicIdType
+	if(topicIdType != MQTTSN_FLAG_TOPICID_TYPE_RESV){
 
-		if(sUnsubscribe->getFlags() && MQTTSN_FLAG_TOPICID_TYPE_SHORT){  //  TopicName
-			unsubscribe->setTopicName(sUnsubscribe->getTopicName());              // prepare UNSUBSCRIBE
+		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_SHORT){
+			unsubscribe->setTopicName(sUnsubscribe->getTopicName()); // TopicName
 
-		}else{     // Normal Topic
-			if(clnode->getTopics()->getTopic(sUnsubscribe->getTopicName())){
-				unsubscribe->setTopicName(sUnsubscribe->getTopicName());          // prepare UNSUBSCRIBE
+		}else if(clnode->getTopics()->getTopic(sUnsubscribe->getTopicId())){
 
-			}else{  // undefined TopicId
-				D_MQTT("%s   can't create a Topic\n", currentDateTime());
-				goto irrUnsub;
-			}
+			if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_PREDEFINED) goto uslbl1;
+
+			unsubscribe->setTopicName(sUnsubscribe->getTopicName());
 		}
 
 		clnode->setBrokerSendMessage(unsubscribe);
 
 		Event* ev1 = new Event();
 		ev1->setBrokerSendEvent(clnode);
-		_res->getBrokerSendQue()->post(ev1);    // Pass a UNSUBSCRIBE to Broker
+		_res->getBrokerSendQue()->post(ev1);    //  UNSUBSCRIBE to Broker
+		delete sUnsubscribe;
+		return;
+	}
 
-
-	}else{                 // Irregular TopicIdType
-		D_MQTT( "%s   Irregular TopicTypes\n", currentDateTime());
-
-irrUnsub:	MQTTSnUnsubAck* sUnsuback = new MQTTSnUnsubAck();
+	/*-- Irregular TopicIdType or MQTTSN_FLAG_TOPICID_TYPE_PREDEFINED --*/
+uslbl1:
+	if(sUnsubscribe->getMsgId()){
+		MQTTSnUnsubAck* sUnsuback = new MQTTSnUnsubAck();
 		sUnsuback->setMsgId(sUnsubscribe->getMsgId());
 
 		clnode->setClientSendMessage(sUnsuback);
 
 		Event* evun = new Event();
 		evun->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(evun);  // Send UNSUBACK to Client instead of UNSUBSCRIBE
-		delete sUnsuback;
+		_res->getClientSendQue()->post(evun);  // Send UNSUBACK to Client
 	}
+
 	delete sUnsubscribe;
 }
 
@@ -557,8 +583,13 @@ void GatewayControlTask::handleSnRegister(Event* ev, ClientNode* clnode, MQTTSnM
 	delete snMsg;
 }
 	
+
+/*=======================================================
+                     Downstream
+ ========================================================*/
+
 /*-------------------------------------------------------
-                Upstream MQTTPubAck
+                Downstream MQTTPubAck   ?
  -------------------------------------------------------*/
 void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
@@ -570,34 +601,49 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 
 	// ToDo: how to get the TopicId
 
-	Event* ev1 = new Event();
 	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
 }
 
 /*-------------------------------------------------------
-                Upstream MQTTPingResp
+                Downstream MQTTPingResp
  -------------------------------------------------------*/
 void GatewayControlTask::handlePingresp(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
 	MQTTSnPingResp* snMsg = new MQTTSnPingResp();
-	Event* ev1 = new Event();
+
 	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
 }
 
 /*-------------------------------------------------------
-                Upstream MQTTSubAck
+                Downstream MQTTSubAck  ?
  -------------------------------------------------------*/
 void GatewayControlTask::handleSuback(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
+	MQTTSubAck* mqMsg = static_cast<MQTTSubAck*>(msg);
+	MQTTSnSubAck* snMsg = new MQTTSnSubAck();
 
+	snMsg->setMsgId(mqMsg->getMessageId());
+	snMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
+	snMsg->setQos(mqMsg->getGrantedQos());
+	// ToDo: how to get the TopicId
+
+	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
+	ev1->setClientSendEvent(clnode);
+	_res->getClientSendQue()->post(ev1);
 }
 
 /*-------------------------------------------------------
-                Upstream MQTTUnsubAck
+                Downstream MQTTUnsubAck    ?
  -------------------------------------------------------*/
 void GatewayControlTask::handleUnsuback(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
@@ -605,15 +651,17 @@ void GatewayControlTask::handleUnsuback(Event* ev, ClientNode* clnode, MQTTMessa
 	MQTTSnUnsubAck* snMsg = new MQTTSnUnsubAck();
 
 	snMsg->setMsgId(mqMsg->getMessageId());
-	Event* ev1 = new Event();
+
 	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
 }
 
 
 /*-------------------------------------------------------
-                Upstream MQTTConnAck
+                Downstream MQTTConnAck
  -------------------------------------------------------*/
 void GatewayControlTask::handleConnack(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
@@ -625,14 +673,16 @@ void GatewayControlTask::handleConnack(Event* ev, ClientNode* clnode, MQTTMessag
 	}else{
 		snMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
 	}
-	Event* ev1 = new Event();
+
 	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
 }
 
 /*-------------------------------------------------------
-                Upstream MQTTPublish
+                Downstream MQTTPublish    ?
  -------------------------------------------------------*/
 void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 

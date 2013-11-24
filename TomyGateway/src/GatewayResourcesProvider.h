@@ -77,12 +77,17 @@ public:
 	MQTTSnMessage* getClientSendMessage();
 	MQTTSnMessage* getClientRecvMessage();
 	MQTTConnect*   getConnectMessage();
+	MQTTSnPubAck*  getWaitedPubAck();
+	MQTTSnSubAck*  getWaitedSubAck();
+
 
 	void setBrokerSendMessage(MQTTMessage*);
 	void setBrokerRecvMessage(MQTTMessage*);
 	void setClientSendMessage(MQTTSnMessage*);
 	void setClientRecvMessage(MQTTSnMessage*);
 	void setConnectMessage(MQTTConnect*);
+	void setWaitedPubAck(MQTTSnPubAck* msg);
+	void setWaitedSubAck(MQTTSnSubAck* msg);
 
 	void deleteBrokerSendMessage();
 	void deleteBrokerRecvMessage();
@@ -99,11 +104,12 @@ public:
 	XBeeAddress64* getAddress64Ptr();
 	uint16_t  getAddress16();
 	UTFString* getNodeId();
-	void      setMsb(uint32_t);
-	void      setLsb(uint32_t);
-	void      setAddress16(uint16_t addr);
-	void      setAddress64(XBeeAddress64* addr);
-	void      setNodeId(UTFString* id);
+	void setMsb(uint32_t);
+	void setLsb(uint32_t);
+	void setAddress16(uint16_t addr);
+	void setAddress64(XBeeAddress64* addr);
+	void setNodeId(UTFString* id);
+
 
 
 private:
@@ -116,8 +122,8 @@ private:
 
 	MQTTConnect*   _mqttConnect;
 
-	MQTTSnPubAck*  _pubAck;
-	MQTTSnSubAck*  _subAck;
+	MQTTSnPubAck*  _waitedPubAck;
+	MQTTSnSubAck*  _waitedSubAck;
 
 	uint16_t _msgId;
 	uint8_t _snMsgId;

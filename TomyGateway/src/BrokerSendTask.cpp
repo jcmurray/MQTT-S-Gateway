@@ -39,6 +39,11 @@
 #include "libmq/Defines.h"
 #include <string.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+extern char* currentDateTime();
+
 
 BrokerSendTask::BrokerSendTask(GatewayResourcesProvider* res){
 	_res = res;
@@ -77,64 +82,56 @@ void BrokerSendTask::run(){
 		clnode = ev->getClientNode();
 		srcMsg = clnode->getBrokerSendMessage();
 
-		if(! clnode->getSocket()->isValid()){
-			clnode->getSocket()->create();
-			if(!clnode->getSocket()->connect(host, port)){
-				break;
-			}
-		}
-
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBLISH\n");
-
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBACK\n");
-
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PINGREQ\n");
-
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
-			delete ev;
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_SUBSCRIBE\n");
-
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_UNSUBSCRIBE\n");
-
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_CONNECT\n");
-
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
 			D_MQTT("BrokerSendTask acquire MQTT_TYPE_DISCONNECT\n");
-
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
 		}
 
 		if(length > 0){
-			clnode->getSocket()->send(buffer, length);
+			if( clnode->getSocket()->isValid()){
+				clnode->getSocket()->send(buffer, length);
+			}else{
+				clnode->getSocket()->create();
+				if(clnode->getSocket()->connect(host, port)){
+					clnode->getSocket()->send(buffer, length);
+				}else{
+					D_MQTT("%s Can't connect socket Client:%s\n",
+							currentDateTime(), clnode->getNodeId()->c_str());
+				}
+			}
 		}
+
 		delete ev;
 	}
 
