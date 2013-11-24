@@ -110,67 +110,78 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
 	uint8_t buffer[SOCKET_MAXBUFFER_LENGTH];
 	memset(buffer, 0, SOCKET_MAXBUFFER_LENGTH);
-	RemainingLength remLen;
 
-	int cnt = clnode->getSocket()->recv(buffer, SOCKET_MAXBUFFER_LENGTH);
+	uint8_t* packet = buffer;
 
-	if(cnt){
-		switch(buffer[0] & 0xf0){
+	int recvLength = clnode->getSocket()->recv(packet, SOCKET_MAXBUFFER_LENGTH);
+
+	while(recvLength > 0){
+
+		switch(*packet & 0xf0){
 			case MQTT_TYPE_PUBACK:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PUBACK\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PUBACK  packetLength=%d\n",recvLength);
 
 				MQTTPubAck* puback = new MQTTPubAck();
-				puback->deserialize(buffer);
+				puback->deserialize(packet);
 				clnode->setBrokerRecvMessage(puback);
-			}
 				break;
+			}
 			case MQTT_TYPE_PUBLISH:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PUBLISH\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PUBLISH  packetLength=%d\n",recvLength);
 
 				MQTTPublish* publish = new MQTTPublish();
-				publish->deserialize(buffer);
+				publish->deserialize(packet);
 				clnode->setBrokerRecvMessage(publish);
-			}
 				break;
+			}
 			case MQTT_TYPE_SUBACK:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_SUBACK\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_SUBACK  packetLength=%d\n",recvLength);
 
 				MQTTSubAck* suback = new MQTTSubAck();
-				suback->deserialize(buffer);
+				suback->deserialize(packet);
 				clnode->setBrokerRecvMessage(suback);
-			}
 				break;
+			}
 			case MQTT_TYPE_PINGRESP:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_PINGRESP\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PINGRESP  packetLength=%d\n",recvLength);
 
 				MQTTPingResp* pingresp = new MQTTPingResp();
-				pingresp->deserialize(buffer);
+				pingresp->deserialize(packet);
 				clnode->setBrokerRecvMessage(pingresp);
-			}
 				break;
+			}
 			case MQTT_TYPE_UNSUBACK:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_UNSUBACK\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_UNSUBACK  packetLength=%d\n",recvLength);
 
 				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
-				unsuback->deserialize(buffer);
+				unsuback->deserialize(packet);
 				clnode->setBrokerRecvMessage(unsuback);
-			}
 				break;
+			}
 			case MQTT_TYPE_CONNACK:{
-				D_MQTT("BrokerRecvTask acquires MQTT_TYPE_CONNACK\n");
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_CONNACK  packetLength=%d\n",recvLength);
 
 				MQTTConnAck* connack = new MQTTConnAck();
-				connack->deserialize(buffer);
+				connack->deserialize(packet);
 				clnode->setBrokerRecvMessage(connack);
-			}
 				break;
-			default:
+			}
+			default:{
+				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_UNKOWN  packetLength=%d\n",recvLength);
 				return;
 				break;
+			}
 		}
+
 		Event* ev = new Event();
 		ev->setBrokerRecvEvent(clnode);
 		_res->getGatewayEventQue()->post(ev);
+
+		RemainingLength rl;
+		rl.deserialize(packet + 1);
+		uint16_t  packetLength = 1 + rl.getSize() + rl.decode();
+		recvLength -= packetLength;
+		packet += packetLength;
 	}
 }
 

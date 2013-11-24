@@ -85,7 +85,7 @@ public:
       bool     deleteTopic(UTFString* topic);
 
 private:
-    uint16_t _topicId;
+    uint16_t _nextTopicId;
     vector<Topic*>  _topics;
 
 };

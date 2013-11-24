@@ -121,14 +121,16 @@ bool Topic::isMatch(Topic* topic){
         Class Topics
  ======================================*/
 Topics::Topics(){
-	_topicId = MQTTSN_TOPICID_NORMAL;
 	Topic* tp = new Topic(UTFString(MQTTSN_TOPIC_PREDEFINED_TIME));
 	tp->setTopicId(MQTTSN_TOPICID_PREDEFINED_TIME);
 	_topics.push_back(tp);
+	_nextTopicId = MQTTSN_TOPICID_NORMAL;
 }
 
 Topics::~Topics() {
-
+	for (uint8_t i = 0; i < _topics.size(); i++) {
+	        delete _topics[i];
+	}
 }
 
 
@@ -144,7 +146,6 @@ uint16_t Topics::getTopicId(UTFString* topic){
 Topic* Topics::getTopic(UTFString* topic) {
     for (uint8_t i = 0; i < _topics.size(); i++) {
         if( topic == (_topics[i]->getTopicName())){
-
             return _topics[i];
         }
     }
@@ -177,10 +178,10 @@ Topic* Topics::createTopic(UTFString* topic){
 }
 
 uint16_t Topics::getNextTopicId(){
-	if(++_topicId <  MQTTSN_TOPICID_NORMAL){
-		_topicId = MQTTSN_TOPICID_NORMAL;
+	if(++_nextTopicId <  MQTTSN_TOPICID_NORMAL){
+		_nextTopicId = MQTTSN_TOPICID_NORMAL;
 	}
-	return _topicId;
+	return _nextTopicId;
 }
 
 Topic* Topics::match(UTFString* topic){

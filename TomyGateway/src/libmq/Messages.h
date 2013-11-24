@@ -412,6 +412,8 @@ public:
     uint8_t  getTopicType();
     uint8_t  getQos();
 	void     setQos(uint8_t);
+	void     setDup();
+	void     setRetain();
 	void     setTopicIdType(uint8_t);
     void setMsgId(uint16_t msgId);
     uint16_t getMsgId();
@@ -608,7 +610,8 @@ public:
 	MQTTMessage();
 	~MQTTMessage();
 	uint8_t getType();
-	uint8_t getQos();   // QOS0 = 0, QOS1 = 1, Others = 3
+	uint8_t getQos();   // QOS0 = 0, QOS1 = 1
+	uint16_t getRemainLength();
 	bool isDup();
 	bool isRetain();
 	uint16_t serialize(uint8_t* buf);
@@ -779,6 +782,7 @@ public:
 	void setTopic(UTFString*);
 	UTFString* getTopic();
 	uint8_t* getPayload();
+	uint8_t  getPayloadLength();
 	uint16_t serialize(uint8_t* buf);
 	bool deserialize(uint8_t* buf);
 

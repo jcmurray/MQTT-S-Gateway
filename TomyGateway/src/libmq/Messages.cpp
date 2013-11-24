@@ -614,6 +614,16 @@ void MQTTSnPublish::setQos(uint8_t qos){
 	setFlags(_flags);
 }
 
+void MQTTSnPublish::setDup(){
+	_flags |= 0x80;
+	setFlags(_flags);
+}
+
+void MQTTSnPublish::setRetain(){
+	_flags |= 0x10;
+	setFlags(_flags);
+}
+
 void MQTTSnPublish::setTopicIdType(uint8_t type){
 	switch(type){
 	case 0:
@@ -1103,6 +1113,10 @@ uint8_t MQTTMessage::getQos(){
 	return 3;
 }
 
+uint16_t MQTTMessage::getRemainLength(){
+	return _remainLength;
+}
+
 bool MQTTMessage::isDup(){
 	return _flags & 0x80;
 }
@@ -1542,6 +1556,11 @@ uint8_t* MQTTPublish::getPayload(){
 	return _payload;
 }
 
+
+uint8_t  MQTTPublish::getPayloadLength(){
+	return _len;
+}
+
 void MQTTPublish::setTopic(UTFString* topic){
 	_topic = *topic;
 }
@@ -1559,7 +1578,7 @@ void MQTTPublish::setPayload(uint8_t* payload, uint8_t length){
 
 uint16_t MQTTPublish::serialize(uint8_t* buf){
 	RemainingLength remLen;
-	_remainLength = _topic.size() + 2 + _len; // topic,MessageID,payload
+	_remainLength = _topic.size() + 2 + _len; // topic,MessageID,Payload
 	remLen.encode(_remainLength);
 
 	*buf++ = (_type & 0xf0) | (_flags & 0x0f);
