@@ -1,7 +1,6 @@
 MQTT-S Gateway over XBee 
 ======
   _This program is under developing._    
-  _Current version is just for reference, but can run._  
   _Documents in TomyGateway directory will help you to understand the architecture of this program._
 
 Supported functions
