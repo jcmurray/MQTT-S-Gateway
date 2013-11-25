@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/02
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 
@@ -308,7 +308,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 			if (tp){
 				tpId = tp->getTopicId();
 			}else{
-				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName())->getTopicId();
+				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName());
 			}
 
 			if(sSubscribe->getMsgId()){
@@ -611,9 +611,9 @@ void GatewayControlTask::handleSnRegister(Event* ev, ClientNode* clnode, MQTTSnM
 
 	respMsg->setMsgId(snMsg->getMsgId());
 
-	Topic* tp = clnode->getTopics()->createTopic(snMsg->getTopicName());
+	uint16_t tpId = clnode->getTopics()->createTopic(snMsg->getTopicName());
 
-	respMsg->setTopicId(tp->getTopicId());
+	respMsg->setTopicId(tpId);
 	respMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
 
 	clnode->setClientSendMessage(respMsg);
@@ -739,45 +739,45 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 	UTFString* tp = mqMsg->getTopic();
 	uint16_t tpId;
 
-	if(*tp != ""){
-		tpId = clnode->getTopics()->getTopicId(tp);
+	tpId = clnode->getTopics()->getTopicId(tp);
 
-		if(tpId == 0){
-			/* ----- may be a publish message response of subscribed with # or + -----*/
-			Topic* topic = clnode->getTopics()->createTopic(tp);
-			if(topic){
-				tpId = topic->getTopicId();
-				MQTTSnRegister* regMsg = new MQTTSnRegister();
-				regMsg->setTopicId(tpId);
-				regMsg->setTopicName(tp);
+	if(tpId == 0){
+		/* ----- may be a publish message response of subscribed with '#' or '+' -----*/
+		tpId = clnode->getTopics()->createTopic(tp);
+		D_MQTT("GatewayControlTask Create Topic   TopicName= %s  TopicId= %d\n", tp->c_str(),tpId);
 
-				clnode->setClientSendMessage(regMsg);
-				Event* evrg = new Event();
-				evrg->setClientSendEvent(clnode);
-				_res->getClientSendQue()->post(evrg);   // Send Register first.
-			}else{
-				D_MQTT("GatewayControlTask Can't create Topic\n");
-				return;
-			}
+		if(tpId > 0){
+			MQTTSnRegister* regMsg = new MQTTSnRegister();
+			regMsg->setTopicId(tpId);
+			regMsg->setTopicName(tp);
+
+			clnode->setClientSendMessage(regMsg);
+			Event* evrg = new Event();
+			evrg->setClientSendEvent(clnode);
+			_res->getClientSendQue()->post(evrg);   // Send Register first.
+		}else{
+			D_MQTT("GatewayControlTask Can't create Topic   %s\n", tp->c_str());
+			return;
 		}
-
-		snMsg->setTopicId(tpId);
-		snMsg->setMsgId(mqMsg->getMessageId());
-		snMsg->setData(mqMsg->getPayload(),mqMsg->getPayloadLength());
-		snMsg->setQos(mqMsg->getQos());
-
-		if(mqMsg->isDup()){
-			snMsg->setDup();
-		}
-
-		if(mqMsg->isRetain()){
-			snMsg->setDup();
-		}
-		clnode->setClientSendMessage(snMsg);
-
-		Event* ev1 = new Event();
-		ev1->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(ev1);
 	}
+
+	snMsg->setTopicId(tpId);
+	snMsg->setMsgId(mqMsg->getMessageId());
+	snMsg->setData(mqMsg->getPayload(),mqMsg->getPayloadLength());
+	snMsg->setQos(mqMsg->getQos());
+
+	if(mqMsg->isDup()){
+		snMsg->setDup();
+	}
+
+	if(mqMsg->isRetain()){
+		snMsg->setDup();
+	}
+	clnode->setClientSendMessage(snMsg);
+
+	Event* ev1 = new Event();
+	ev1->setClientSendEvent(clnode);
+	_res->getClientSendQue()->post(ev1);
+
 }
 

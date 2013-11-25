@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/10/13
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 #include "GatewayResourcesProvider.h"

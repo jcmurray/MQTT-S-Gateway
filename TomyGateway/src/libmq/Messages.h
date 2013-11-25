@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/10/19
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 
@@ -174,6 +174,7 @@ public:
 	UTFString(uint8_t* pos);
 	~UTFString();
 	UTFString& operator=(const string& str);
+	UTFString& operator=(UTFString ustr);
 	bool operator==(UTFString& str);
 	bool operator!=(UTFString& str);
 
@@ -447,9 +448,12 @@ public:
     uint8_t getReturnCode();
 
     void absorb(MQTTSnMessage* src);
+    void absorb(XBResponse* src);
 
 private:
-
+    uint16_t _topicId;
+	uint16_t _msgId;
+	uint8_t _returnCode;
  };
  /*=====================================
          Class MQTTSnSubscribe

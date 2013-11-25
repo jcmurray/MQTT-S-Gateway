@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/10/19
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 
@@ -76,12 +76,17 @@ UTFString& UTFString::operator=(const string& str){
 	return *this;
 }
 
+UTFString& UTFString::operator=(UTFString ustr){
+	string::operator=(ustr);
+	return *this;
+}
+
 bool UTFString::operator==(UTFString &str){
-	return not(this->compare(str));
+	return (compare(str) == 0);
 }
 
 bool UTFString::operator!=(UTFString &str){
-	return this->compare(str);
+	return (compare(str) != 0);
 }
 
 void UTFString::serialize(uint8_t *pos){
@@ -733,6 +738,10 @@ void MQTTSnPubAck::absorb(MQTTSnMessage* src){
 	MQTTSnMessage::absorb(src);
 }
 
+void MQTTSnPubAck::absorb(XBResponse* resp){
+	MQTTSnMessage::absorb(resp);
+}
+
  /*=====================================
          Class MQTTSnSubscribe
   ======================================*/
@@ -1105,12 +1114,7 @@ uint8_t MQTTMessage::getType(){
 }
 
 uint8_t MQTTMessage::getQos(){
-	if((_flags & 0x06) == 0x00){
-		return 0;
-	}else if((_flags & 0x06) == 0x01){
-		return 1;
-	}
-	return 3;
+	return (_flags & 0x06) >> 1;
 }
 
 uint16_t MQTTMessage::getRemainLength(){

@@ -25,9 +25,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  *
- *  Created on: 2013/06/29
+ *  Created on: 2013/11/24
  *  Author:     Tomoaki YAMAGUCHI
- *  Version:    1.0.4
+ *  Version:    0.1.0
  *
  */
 
@@ -441,6 +441,7 @@ bool XBee::receiveResponse(XBResponse* response){
 
 void XBee::setSerialPort(SerialPort *serialPort){
     _serialPort = serialPort;
+    _serialPort->flush();
 }
 
 void XBee::sendRequest(XBRequest &request){

@@ -27,7 +27,7 @@
  *
  *  Created on: 2013/11/07
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 
@@ -76,7 +76,7 @@ class Topics {
 public:
       Topics();
       ~Topics();
-      Topic*    createTopic(UTFString* topic);
+      uint16_t  createTopic(UTFString* topic);
       uint16_t  getTopicId(UTFString* topic);
       uint16_t  getNextTopicId();
       Topic*    getTopic(UTFString* topic);

@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/07
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 
@@ -145,7 +145,7 @@ uint16_t Topics::getTopicId(UTFString* topic){
 
 Topic* Topics::getTopic(UTFString* topic) {
     for (uint8_t i = 0; i < _topics.size(); i++) {
-        if( topic == (_topics[i]->getTopicName())){
+        if( *topic == *(_topics[i]->getTopicName())){
             return _topics[i];
         }
     }
@@ -162,18 +162,19 @@ Topic* Topics::getTopic(uint16_t id) {
 }
 
 
-Topic* Topics::createTopic(UTFString* topic){
+uint16_t Topics::createTopic(UTFString* topic){
     if (!getTopic(topic)){
         if ( _topics.size() < MAX_TOPIC_COUNT){
-        	Topic* tp = new Topic(*topic);
+        	Topic* tp = new Topic();
         	tp->setTopicId(getNextTopicId());
+        	tp->setTopicName(*topic);
         	_topics.push_back(tp);
-        	return tp;
+        	return _nextTopicId;
         }else{
-        	return NULL;
+        	return 0;
         }
     }else{
-    	return getTopic(topic);
+    	return getTopicId(topic);
     }
 }
 

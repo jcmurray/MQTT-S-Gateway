@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/10/13
  *      Author: Tomoaki YAMAGUCHI
- *     Version:
+ *     Version: 0.1.0
  *
  */
 #include "ClientRecvTask.h"
@@ -103,6 +103,12 @@ void ClientRecvTask::run(){
 
 				}else if(resp->getPayloadPtr()[1] == MQTTSN_TYPE_PUBLISH){
 					MQTTSnPublish* msg = new MQTTSnPublish();
+					msg->absorb(resp);
+					clnode->setClientRecvMessage(msg);
+					ev->setClientRecvEvent(clnode);
+
+				}else if(resp->getPayloadPtr()[1] == MQTTSN_TYPE_PUBACK){
+					MQTTSnPubAck* msg = new MQTTSnPubAck();
 					msg->absorb(resp);
 					clnode->setClientRecvMessage(msg);
 					ev->setClientRecvEvent(clnode);
