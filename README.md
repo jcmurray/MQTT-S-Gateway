@@ -1,6 +1,6 @@
 MQTT-S Gateway over XBee 
 ======
-  _This program is under developing._    
+  _This program is First Beta Release of C++ based gateway over XBee S2._    
   _Documents in TomyGateway directory will help you to understand the architecture of this program._
 
 Supported functions
