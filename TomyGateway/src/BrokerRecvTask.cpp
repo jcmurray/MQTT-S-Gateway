@@ -115,11 +115,16 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
 	int recvLength = clnode->getSocket()->recv(packet, SOCKET_MAXBUFFER_LENGTH);
 
+	if (recvLength == -1){
+		D_MQTT(" Client : %s Broker Connection Error\n", clnode->getNodeId()->c_str());
+
+	}
+
 	while(recvLength > 0){
 
 		switch(*packet & 0xf0){
 			case MQTT_TYPE_PUBACK:{
-				D_MQTT("                   recv    PUBACK       <<<< Broker\n");
+				D_MQTT("     PUBACK       <<<<   Broker\n");
 
 				MQTTPubAck* puback = new MQTTPubAck();
 				puback->deserialize(packet);
@@ -127,7 +132,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			case MQTT_TYPE_PUBLISH:{
-				D_MQTT("\n                   recv    PUBLISH      <<<< Broker\n");
+				D_MQTT("\n     PUBLISH      <<<<   Broker\n");
 
 				MQTTPublish* publish = new MQTTPublish();
 				publish->deserialize(packet);
@@ -135,7 +140,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			case MQTT_TYPE_SUBACK:{
-				D_MQTT("                   recv    SUBACK       <<<< Broker\n");
+				D_MQTT("     SUBACK       <<<<   Broker\n");
 
 				MQTTSubAck* suback = new MQTTSubAck();
 				suback->deserialize(packet);
@@ -143,7 +148,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			case MQTT_TYPE_PINGRESP:{
-				D_MQTT("                   recv    PINGRESP     <<<< Broker\n");
+				D_MQTT("     PINGRESP     <<<<   Broker\n");
 
 				MQTTPingResp* pingresp = new MQTTPingResp();
 				pingresp->deserialize(packet);
@@ -151,7 +156,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			case MQTT_TYPE_UNSUBACK:{
-				D_MQTT("                   recv    UNSUBACK     <<<< Broker\n");
+				D_MQTT("     UNSUBACK     <<<<   Broker\n");
 
 				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 				unsuback->deserialize(packet);
@@ -159,7 +164,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			case MQTT_TYPE_CONNACK:{
-				D_MQTT("                   recv    CONNACK\n");
+				D_MQTT("     CONNACK      <<<<   Broker\n");
 
 				MQTTConnAck* connack = new MQTTConnAck();
 				connack->deserialize(packet);
@@ -167,7 +172,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 				break;
 			}
 			default:{
-				D_MQTT("                   recv    UNKOWN_TYPE  packetLength=%d\n",recvLength);
+				D_MQTT("     UNKOWN_TYPE  packetLength=%d\n",recvLength);
 				return;
 				break;
 			}

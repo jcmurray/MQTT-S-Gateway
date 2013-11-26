@@ -125,7 +125,7 @@ int Socket::recv ( uint8_t* buf, uint16_t len ){
 
 	if ( status == -1 )	{
 	    cout << "status == -1   errno == " << errno << "  in Socket::recv\n";
-	    return 0;
+	    return -1;
 	}else if ( status == 0 ){
 	    return 0;
 	}else{
