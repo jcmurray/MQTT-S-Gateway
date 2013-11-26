@@ -5,7 +5,7 @@
 /*=================================
  *    Debug Condition
  ==================================*/
-#define DEBUG_ZBEESTACK
+//#define DEBUG_ZBEESTACK
 
 /*=================================
       Debug Print functions

@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/02
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 0.1.1
  *
  */
 
@@ -130,43 +130,43 @@ void GatewayControlTask::run(){
 			MQTTSnMessage* msg = clnode->getClientRecvMessage();
 			
 			if(msg->getType() == MQTTSN_TYPE_PUBLISH){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBLISH\n");
+				D_MQTT("\nGatewayControlTask acquire PUBLISH      <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnPublish(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_SUBSCRIBE){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_SUBSCRIBE\n");
+				D_MQTT("\nGatewayControlTask acquire SUBSCRIBE    <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnSubscribe(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_UNSUBSCRIBE){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_UNSUBSCRIBE\n");
+				D_MQTT("\nGatewayControlTask acquire UNSUBSCRIBE  <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnUnsubscribe(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_PINGREQ){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PINGREQ\n");
+				D_MQTT("\nGatewayControlTask acquire PINGREQ      <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnPingReq(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_PUBACK){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBACK\n");
+				D_MQTT("GatewayControlTask acquire PUBAC        <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnPubAck(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_CONNECT){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_CONNECT\n");
+				D_MQTT("\nGatewayControlTask acquire CONNECT      <<<  Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnConnect(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_WILLTOPIC){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_WILLTOPIC\n");
+				D_MQTT("GatewayControlTask acquire WILLTOPIC    <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnWillTopic(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_WILLMSG){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_WILLMSG\n");
+				D_MQTT("GatewayControlTask acquire WILLMSG      <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnWillMsg(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_DISCONNECT){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_DISCONNECT\n");
+				D_MQTT("\nGatewayControlTask acquire DISCONNECT   <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnDisconnect(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTTSN_TYPE_REGISTER){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_REGISTER\n");
+				D_MQTT("\nGatewayControlTask acquire REGISTER     <<<< Client: %s\n", clnode->getNodeId()->c_str());
 				handleSnRegister(ev, clnode, msg);
 
 			}else{
@@ -180,27 +180,27 @@ void GatewayControlTask::run(){
 			MQTTMessage* msg = clnode->getBrokerRecvMessage();
 			
 			if(msg->getType() == MQTT_TYPE_PUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PUBACK\n");
+				D_MQTT("GatewayControlTask acquire PUBACK       >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handlePuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_PINGRESP){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PINGRESP\n");
+				D_MQTT("GatewayControlTask acquire PINGRES      >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handlePingresp(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_SUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_SUBACK\n");
+				D_MQTT("GatewayControlTask acquire SUBACK       >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handleSuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_UNSUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_UNSUBACK\n");
+				D_MQTT("GatewayControlTask acquire UNSUBACK     >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handleUnsuback(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_CONNACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_CONNACK\n");
+				D_MQTT("GatewayControlTask acquire CONNACK      >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handleConnack(ev, clnode, msg);
 
 			}else if(msg->getType() == MQTT_TYPE_PUBLISH){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PUBLISH\n");
+				D_MQTT("GatewayControlTask acquire PUBLISH      >>>> Client: %s\n", clnode->getNodeId()->c_str());
 				handlePublish(ev, clnode, msg);
 			}else{
 				D_MQTT("%s   Irregular BrokerRecvMessage\n", currentDateTime());
