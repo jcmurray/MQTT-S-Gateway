@@ -441,7 +441,6 @@ bool XBee::receiveResponse(XBResponse* response){
 
 void XBee::setSerialPort(SerialPort *serialPort){
     _serialPort = serialPort;
-    _serialPort->flush();
 }
 
 void XBee::sendRequest(XBRequest &request){

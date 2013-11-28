@@ -186,6 +186,10 @@ void ClientNode::setKeepAlive(MQTTSnMessage* msg){
 	_keepAliveTimer.start(_keepAliveMsec * 1.5);
 }
 
+void ClientNode::updateStatus(ClientStatus stat){
+	_status = stat;
+}
+
 void ClientNode::updateStatus(MQTTSnMessage* msg){
 	if(((_status == Cstat_Disconnected) || (_status == Cstat_Lost)) && 
          msg->getType() == MQTTSN_TYPE_CONNECT){

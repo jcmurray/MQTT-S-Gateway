@@ -71,6 +71,7 @@ private:
 	void handleUnsuback(Event* ev, ClientNode* clnode, MQTTMessage* msg);
 	void handleConnack(Event* ev, ClientNode* clnode, MQTTMessage* msg);
 	void handlePublish(Event* ev, ClientNode* clnode, MQTTMessage* msg);
+	void handleDisconnect(Event* ev, ClientNode* clnode, MQTTMessage* msg);
 };
 
 #endif /* GATEWAYCONTROLTASK_H_ */

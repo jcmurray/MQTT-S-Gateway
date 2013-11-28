@@ -96,6 +96,7 @@ public:
 
 	void checkTimeover();
 	void updateStatus(MQTTSnMessage*);
+	void updateStatus(ClientStatus);
 	uint16_t getNextMessageId();
 	uint8_t getNextSnMsgId();
 	Topics* getTopics();
