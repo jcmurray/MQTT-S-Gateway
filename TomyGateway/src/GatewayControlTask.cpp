@@ -565,15 +565,17 @@ void GatewayControlTask::handleSnWillTopic(Event* ev, ClientNode* clnode, MQTTSn
 	MQTTSnWillMsgReq* reqMsg = new MQTTSnWillMsgReq();
 	snMsg->absorb(msg);
 
-	clnode->getConnectMessage()->setWillTopic(snMsg->getWillTopic());
-	clnode->getConnectMessage()->setWillQos(snMsg->getQos());
+	if(clnode->getConnectMessage()){
+		clnode->getConnectMessage()->setWillTopic(snMsg->getWillTopic());
+		clnode->getConnectMessage()->setWillQos(snMsg->getQos());
 
-	clnode->setClientSendMessage(reqMsg);
+		clnode->setClientSendMessage(reqMsg);
 
-	Event* evt = new Event();
-	evt->setClientSendEvent(clnode);
-		D_MQTT("     WILLMSGREQ   >>>>   Client: %s\n", clnode->getNodeId()->c_str());
-	_res->getClientSendQue()->post(evt);  // Send WILLMSGREQ to Client
+		Event* evt = new Event();
+		evt->setClientSendEvent(clnode);
+			D_MQTT("     WILLMSGREQ   >>>>   Client: %s\n", clnode->getNodeId()->c_str());
+		_res->getClientSendQue()->post(evt);  // Send WILLMSGREQ to Client
+	}
 	delete snMsg;
 }
 
@@ -585,13 +587,16 @@ void GatewayControlTask::handleSnWillMsg(Event* ev, ClientNode* clnode, MQTTSnMe
 	MQTTSnWillMsg* snMsg = new MQTTSnWillMsg();
 	snMsg->absorb(msg);
 
-	clnode->getConnectMessage()->setWillMessage(snMsg->getWillMsg());
+	if(clnode->getConnectMessage()){
+		clnode->getConnectMessage()->setWillMessage(snMsg->getWillMsg());
 
 	clnode->setBrokerSendMessage(clnode->getConnectMessage());
+	clnode->setConnectMessage(NULL);
 
 	Event* ev1 = new Event();
 	ev1->setBrokerSendEvent(clnode);
 	_res->getBrokerSendQue()->post(ev1);
+	}
 	delete snMsg;
 }
 
