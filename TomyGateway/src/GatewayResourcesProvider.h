@@ -109,6 +109,7 @@ public:
 	void setLsb(uint32_t);
 	void setAddress16(uint16_t addr);
 	void setAddress64(XBeeAddress64* addr);
+	void setTopics(Topics* topics);
 	void setNodeId(UTFString* id);
 
 

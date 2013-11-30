@@ -535,6 +535,8 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
 		if(topics){
 			delete topics;
 		}
+		topics = new Topics();
+		clnode->setTopics(topics);
 		mqMsg->setCleanSessionFlg();
 	}
 
@@ -776,7 +778,6 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 	if(tpId == 0){
 		/* ----- may be a publish message response of subscribed with '#' or '+' -----*/
 		tpId = clnode->getTopics()->createTopic(tp);
-		D_MQTT("GatewayControlTask Create Topic   TopicName= %s  TopicId= %d\n", tp->c_str(),tpId);
 
 		if(tpId > 0){
 			MQTTSnRegister* regMsg = new MQTTSnRegister();

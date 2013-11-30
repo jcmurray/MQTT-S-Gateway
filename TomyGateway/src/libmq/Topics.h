@@ -45,7 +45,7 @@
 #define MQTTSN_TOPICID_PREDEFINED_TIME  0x0001
 #define MQTTSN_TOPIC_PREDEFINED_TIME ("PDEF/01")
 
-#define MAX_TOPIC_COUNT   20        // Number of Topic Par ClientNode
+#define MAX_TOPIC_COUNT   50        // Number of Topic Par ClientNode
 
 /*=====================================
         Class Topic
@@ -86,6 +86,7 @@ public:
 
 private:
     uint16_t _nextTopicId;
+    uint8_t  _cnt;
     vector<Topic*>  _topics;
 
 };

@@ -124,12 +124,15 @@ Topics::Topics(){
 	Topic* tp = new Topic(UTFString(MQTTSN_TOPIC_PREDEFINED_TIME));
 	tp->setTopicId(MQTTSN_TOPICID_PREDEFINED_TIME);
 	_topics.push_back(tp);
+	_cnt = 1;
 	_nextTopicId = MQTTSN_TOPICID_NORMAL;
 }
 
 Topics::~Topics() {
 	for (uint8_t i = 0; i < _topics.size(); i++) {
-	        delete _topics[i];
+	    if(_topics[i]){
+	    	delete _topics[i];
+	    }
 	}
 }
 
@@ -144,31 +147,36 @@ uint16_t Topics::getTopicId(UTFString* topic){
 
 
 Topic* Topics::getTopic(UTFString* topic) {
-    for (uint8_t i = 0; i < _topics.size(); i++) {
-        if( *topic == *(_topics[i]->getTopicName())){
-            return _topics[i];
-        }
+    for (uint8_t i = 0; i < _cnt; i++) {
+    	if(_topics[i]){
+			if( *topic == *(_topics[i]->getTopicName())){
+				return _topics[i];
+			}
+    	}
     }
     return NULL;
 }
 
 Topic* Topics::getTopic(uint16_t id) {
-    for (uint8_t i = 0; i < _topics.size(); i++) {
-        if ( _topics[i]->getTopicId() == id) {
-            return _topics[i];
-        }
+    for (uint8_t i = 0; i < _cnt; i++) {
+    	if(_topics[i]){
+			if ( _topics[i]->getTopicId() == id) {
+				return _topics[i];
+			}
+    	}
     }
-      return NULL;
+    return NULL;
 }
 
 
 uint16_t Topics::createTopic(UTFString* topic){
     if (!getTopic(topic)){
-        if ( _topics.size() < MAX_TOPIC_COUNT){
+        if ( _cnt < MAX_TOPIC_COUNT){
         	Topic* tp = new Topic();
         	tp->setTopicId(getNextTopicId());
         	tp->setTopicName(*topic);
         	_topics.push_back(tp);
+        	_cnt++;
         	return _nextTopicId;
         }else{
         	return 0;
@@ -188,12 +196,14 @@ uint16_t Topics::getNextTopicId(){
 Topic* Topics::match(UTFString* topic){
 	uint8_t pos;
 
-    for ( uint8_t i = 0; i< _topics.size(); i++){
-        if (_topics[i]->isWildCard(&pos)){
-            if (getTopic(topic)->isMatch(_topics[i])){
-               return _topics[i];
-            }
-        }
+    for ( uint8_t i = 0; i< _cnt; i++){
+    	if(_topics[i]){
+			if ( _topics[i]->isWildCard(&pos)){
+				if (getTopic(topic)->isMatch(_topics[i])){
+					return _topics[i];
+				}
+			}
+    	}
     }
     return NULL;
 }

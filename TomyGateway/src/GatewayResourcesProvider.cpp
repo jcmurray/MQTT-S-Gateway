@@ -302,6 +302,9 @@ void ClientNode::setNodeId(UTFString* id){
 	_nodeId = *id;
 }
 
+void ClientNode::setTopics(Topics* topics){
+	_topics = topics;
+}
 
 
 /*=====================================
