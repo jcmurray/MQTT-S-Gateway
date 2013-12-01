@@ -225,12 +225,9 @@ void GatewayControlTask::run(){
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
-	Topics* topics = clnode->getTopics();
 	MQTTSnPublish* sPublish = new MQTTSnPublish();
 	MQTTPublish* mqMsg = new MQTTPublish();
 	sPublish->absorb(msg);
-
-	mqMsg->setTopic(topics->getTopic(sPublish->getTopicId())->getTopicName());
 
 	Topic* tp = clnode->getTopics()->getTopic(sPublish->getTopicId());
 
