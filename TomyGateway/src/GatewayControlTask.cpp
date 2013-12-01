@@ -575,7 +575,7 @@ void GatewayControlTask::handleSnWillTopic(Event* ev, ClientNode* clnode, MQTTSn
 
 		Event* evt = new Event();
 		evt->setClientSendEvent(clnode);
-			D_MQTT("     WILLMSGREQ   >>>>   Client: %s\n", clnode->getNodeId()->c_str());
+		D_MQTT("     WILLMSGREQ   >>>>   Client: %s\n", clnode->getNodeId()->c_str());
 		_res->getClientSendQue()->post(evt);  // Send WILLMSGREQ to Client
 	}
 	delete snMsg;
@@ -592,12 +592,23 @@ void GatewayControlTask::handleSnWillMsg(Event* ev, ClientNode* clnode, MQTTSnMe
 	if(clnode->getConnectMessage()){
 		clnode->getConnectMessage()->setWillMessage(snMsg->getWillMsg());
 
-	clnode->setBrokerSendMessage(clnode->getConnectMessage());
-	clnode->setConnectMessage(NULL);
+		clnode->setBrokerSendMessage(clnode->getConnectMessage());
+		clnode->setConnectMessage(NULL);
 
-	Event* ev1 = new Event();
-	ev1->setBrokerSendEvent(clnode);
-	_res->getBrokerSendQue()->post(ev1);
+		Event* ev1 = new Event();
+		ev1->setBrokerSendEvent(clnode);
+		_res->getBrokerSendQue()->post(ev1);
+
+	}else{
+		MQTTSnConnack* connack = new MQTTSnConnack();
+		connack->setReturnCode(MQTTSN_RC_REJECTED_CONGESTION);
+
+		clnode->setClientSendMessage(connack);
+		Event* ev1 = new Event();
+		ev1->setClientSendEvent(clnode);
+		D_MQTT("    *CONNACK      >>>>   Client: %s\n", clnode->getNodeId()->c_str());
+		_res->getClientSendQue()->post(ev1);  // Send CONNACK REJECTED CONGESTION to Client
+
 	}
 	delete snMsg;
 }

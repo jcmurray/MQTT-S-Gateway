@@ -70,7 +70,7 @@ public:
 	// Client initialization
 	bool connect( const string host, const int port );
 
-	bool send( const uint8_t* buf, uint16_t length );
+	int send( const uint8_t* buf, uint16_t length );
 	int  recv ( uint8_t* buf, uint16_t len );
 
 

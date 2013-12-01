@@ -109,22 +109,19 @@ bool Socket::accept ( Socket& new_socket ) const{
 	}
 }
 
-bool Socket::send (const uint8_t* buf, uint16_t length  ){
+int Socket::send (const uint8_t* buf, uint16_t length  ){
 	int status = ::send ( _sock, buf, length, MSG_NOSIGNAL );
-
-	if ( status == -1 ){
-	    return false;
-	}else{
-	    return true;
+	if( status == -1){
+		printf("       errno == %d in Socket::send\n", errno);
 	}
+	return status;
 }
-
 
 int Socket::recv ( uint8_t* buf, uint16_t len ){
 	int status = ::recv ( _sock, buf, len, 0 );
 
 	if ( status == -1 )	{
-	    cout << "status == -1   errno == " << errno << "  in Socket::recv\n";
+		printf("       errno == %d in Socket::recv\n", errno);
 	    return -1;
 	}else if ( status == 0 ){
 	    return 0;

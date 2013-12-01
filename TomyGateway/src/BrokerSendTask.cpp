@@ -120,16 +120,30 @@ void BrokerSendTask::run(){
 			length = msg->serialize(buffer);
 		}
 
+		int rc = 0;
+
 		if(length > 0){
 			if( clnode->getSocket()->isValid()){
-				clnode->getSocket()->send(buffer, length);
+				rc = clnode->getSocket()->send(buffer, length);
+				if(rc == -1){
+					clnode->getSocket()->disconnect();
+					D_MQTT("       Socket is valid. but can't send Client:%s\n", clnode->getNodeId()->c_str());
+				}
 			}else{
-				clnode->getSocket()->create();
-				if(clnode->getSocket()->connect(host, port)){
-					clnode->getSocket()->send(buffer, length);
+				if(clnode->getSocket()->create()){
+					if(clnode->getSocket()->connect(host, port)){
+						rc = clnode->getSocket()->send(buffer, length);
+						if(rc == -1){
+							clnode->getSocket()->disconnect();
+							D_MQTT("       Socket is created. but can't send, Client:%s\n", clnode->getNodeId()->c_str());
+						}
+					}else{
+						D_MQTT("%s Can't connect socket Client:%s\n",
+								currentDateTime(), clnode->getNodeId()->c_str());
+					}
 				}else{
-					D_MQTT("%s Can't connect socket Client:%s\n",
-							currentDateTime(), clnode->getNodeId()->c_str());
+					D_MQTT("%s Can't create socket Client:%s\n",
+						currentDateTime(), clnode->getNodeId()->c_str());
 				}
 			}
 		}
