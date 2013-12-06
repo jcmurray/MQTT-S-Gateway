@@ -85,42 +85,42 @@ void BrokerSendTask::run(){
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PUBLISH      >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     PUBLISH      >>>>    Broker     %s\n", msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PINGREQ      >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     PINGREQ      >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     SUBSCRIBE    >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     SUBSCRIBE    >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     UNSUBSCRIBE  >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     UNSUBSCRIBE  >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     CONNECT      >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     CONNECT      >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     DISCONNECT   >>>>    Broker     %s\n", msgPrint(msg));
+			D_MQTT("     DISCONNECT   >>>>    Broker     %s\n", msgPrint(buffer,msg));
 
 		}
 
@@ -157,13 +157,14 @@ void BrokerSendTask::run(){
 }
 
 
-char*  BrokerSendTask::msgPrint(MQTTMessage* msg){
-	uint8_t sbuf[512];
+char*  BrokerSendTask::msgPrint(uint8_t* buffer, MQTTMessage* msg){
 	char* buf = _printBuf;
-	msg->serialize(sbuf);
+
+	sprintf(buf, " 0x%02X", *buffer);
+	buf += 5;
 
 	for(int i = 0; i < msg->getRemainLength(); i++){
-		sprintf(buf, " 0x%02X", *( sbuf + msg->getRemainLengthSize() + i));
+		sprintf(buf, " 0x%02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
 		buf += 5;
 	}
 	*buf = 0;

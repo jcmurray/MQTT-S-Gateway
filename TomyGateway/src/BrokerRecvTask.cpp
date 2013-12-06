@@ -131,7 +131,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			case MQTT_TYPE_PUBACK:{
 				MQTTPubAck* puback = new MQTTPubAck();
 				puback->deserialize(packet);
-				D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(puback));
+				D_MQTT("     PUBACK       <<<<    Broker     %s\n", msgPrint(puback));
 
 				clnode->setBrokerRecvMessage(puback);
 				break;

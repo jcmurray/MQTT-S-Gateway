@@ -239,7 +239,7 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 
 			Event* ev1 = new Event();
 			ev1->setClientSendEvent(clnode);
-			D_MQTT("     PUBACK       <<<<    %s    %s\n", clnode->getNodeId()->c_str(), msgPrint(sPuback));
+			D_MQTT("     PUBACK       >>>>    %s    %s\n", clnode->getNodeId()->c_str(), msgPrint(sPuback));
 			_res->getClientSendQue()->post(ev1);  // Send PubAck INVALID_TOPIC_ID
 		}
 	}

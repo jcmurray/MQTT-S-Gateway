@@ -44,7 +44,7 @@ public:
 	BrokerSendTask(GatewayResourcesProvider* res);
 	~BrokerSendTask();
 	void run();
-	char* msgPrint(MQTTMessage* msg);
+	char* msgPrint(uint8_t* buffer, MQTTMessage* msg);
 private:
 	GatewayResourcesProvider* _res;
 	char _printBuf[512];
