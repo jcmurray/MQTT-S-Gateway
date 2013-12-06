@@ -59,7 +59,7 @@ void BrokerRecvTask::run(){
 
 	ClientList* clist = _res->getClientList();
 	fd_set readfds;
-	int sock;
+	int sockfd;
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -69,11 +69,11 @@ void BrokerRecvTask::run(){
 		for( int i = 0; i < clist->getClientCount(); i++){
 			if((*clist)[i]){
 				if((*clist)[i]->getSocket()->isValid()){
-					sock = (*clist)[i]->getSocket()->getSock();
-					FD_SET(sock, &readfds);
+					sockfd = (*clist)[i]->getSocket()->getSock();
+					FD_SET(sockfd, &readfds);
 
-					if(sock > maxSock){
-						maxSock = sock;
+					if(sockfd > maxSock){
+						maxSock = sockfd;
 					}
 				}
 			}else{
@@ -88,8 +88,8 @@ void BrokerRecvTask::run(){
 			for( int i = 0; i < clist->getClientCount(); i++){
 				if((*clist)[i]){
 					if((*clist)[i]->getSocket()->isValid()){
-						int sock = (*clist)[i]->getSocket()->getSock();
-						if(FD_ISSET(sock, &readfds)){
+						int sockfd = (*clist)[i]->getSocket()->getSock();
+						if(FD_ISSET(sockfd, &readfds)){
 
 							recvAndFireEvent((*clist)[i]);
 						}
@@ -129,50 +129,50 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
 		switch(*packet & 0xf0){
 			case MQTT_TYPE_PUBACK:{
-				D_MQTT("     PUBACK       <<<<   Broker\n");
-
 				MQTTPubAck* puback = new MQTTPubAck();
 				puback->deserialize(packet);
+				D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(puback));
+
 				clnode->setBrokerRecvMessage(puback);
 				break;
 			}
 			case MQTT_TYPE_PUBLISH:{
-				D_MQTT("\n     PUBLISH      <<<<   Broker\n");
-
 				MQTTPublish* publish = new MQTTPublish();
 				publish->deserialize(packet);
+				D_MQTT("\n     PUBLISH      <<<<    Broker     %s\n", msgPrint(publish));
+
 				clnode->setBrokerRecvMessage(publish);
 				break;
 			}
 			case MQTT_TYPE_SUBACK:{
-				D_MQTT("     SUBACK       <<<<   Broker\n");
-
 				MQTTSubAck* suback = new MQTTSubAck();
 				suback->deserialize(packet);
+				D_MQTT("     SUBACK       <<<<    Broker     %s\n", msgPrint(suback));
+
 				clnode->setBrokerRecvMessage(suback);
 				break;
 			}
 			case MQTT_TYPE_PINGRESP:{
-				D_MQTT("     PINGRESP     <<<<   Broker\n");
-
 				MQTTPingResp* pingresp = new MQTTPingResp();
 				pingresp->deserialize(packet);
+				D_MQTT("     PINGRESP     <<<<    Broker     %s\n", msgPrint(pingresp));
+
 				clnode->setBrokerRecvMessage(pingresp);
 				break;
 			}
 			case MQTT_TYPE_UNSUBACK:{
-				D_MQTT("     UNSUBACK     <<<<   Broker\n");
-
 				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 				unsuback->deserialize(packet);
+				D_MQTT("     UNSUBACK     <<<<    Broker     %s\n", msgPrint(unsuback));
+
 				clnode->setBrokerRecvMessage(unsuback);
 				break;
 			}
 			case MQTT_TYPE_CONNACK:{
-				D_MQTT("     CONNACK      <<<<   Broker\n");
-
 				MQTTConnAck* connack = new MQTTConnAck();
 				connack->deserialize(packet);
+				D_MQTT("     CONNACK      <<<<    Broker     %s\n", msgPrint(connack));
+
 				clnode->setBrokerRecvMessage(connack);
 				break;
 			}
@@ -195,3 +195,16 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 	}
 }
 
+
+char*  BrokerRecvTask::msgPrint(MQTTMessage* msg){
+	uint8_t sbuf[512];
+	char* buf = _printBuf;
+	msg->serialize(sbuf);
+
+	for(int i = 0; i < msg->getRemainLength(); i++){
+		sprintf(buf, " 0x%02X", *( sbuf + msg->getRemainLengthSize() + i));
+		buf += 5;
+	}
+	*buf = 0;
+	return _printBuf;
+}

@@ -40,6 +40,7 @@
 #include <string>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 extern uint16_t getUint16(uint8_t* pos);
 extern void setUint16(uint8_t* pos, uint16_t val);
@@ -1119,6 +1120,12 @@ uint8_t MQTTMessage::getQos(){
 
 uint16_t MQTTMessage::getRemainLength(){
 	return _remainLength;
+}
+
+uint8_t MQTTMessage::getRemainLengthSize(){
+	RemainingLength remLen;
+	remLen.encode(_remainLength);
+	return remLen.getSize();
 }
 
 bool MQTTMessage::isDup(){

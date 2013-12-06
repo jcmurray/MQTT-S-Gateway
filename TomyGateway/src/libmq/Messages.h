@@ -616,6 +616,7 @@ public:
 	uint8_t getType();
 	uint8_t getQos();   // QOS0 = 0, QOS1 = 1
 	uint16_t getRemainLength();
+	uint8_t getRemainLengthSize();
 	bool isDup();
 	bool isRetain();
 	uint16_t serialize(uint8_t* buf);

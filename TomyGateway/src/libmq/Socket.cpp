@@ -46,16 +46,29 @@ using namespace std;
  =======================================*/
 Socket::Socket() :  _sock ( -1 ){
     memset ( &_addr, 0, sizeof ( _addr ) );
+    _disconReq = false;
 }
 
 Socket::~Socket(){
     disconnect();
 }
 
+bool Socket::isValid(){
+	if(!_disconReq && _sock > 0){
+		return true;
+	}else if(_disconReq && _sock > 0){
+		::close(_sock);
+		_sock = -1;
+    	_disconReq = false;
+		_sem.post();
+	}
+	return false;
+}
+
 void Socket::disconnect(){
-    if ( isValid() ){
-    	::close ( _sock );
-    	_sock = -1;
+    if ( _sock > 0 ){
+    	_disconReq = true;
+    	_sem.wait();
     }
 }
 
@@ -87,8 +100,8 @@ bool Socket::bind ( const int port ){
 	return true;
 }
 
-bool Socket::listen() const{
-	if ( ! isValid() )	{
+bool Socket::listen() {
+	if ( !isValid() ){
 	    return false;
 	}
 	int listen_return = ::listen ( _sock, SOCKET_MAXCONNECTIONS );
@@ -99,7 +112,7 @@ bool Socket::listen() const{
 }
 
 
-bool Socket::accept ( Socket& new_socket ) const{
+bool Socket::accept ( Socket& new_socket ){
 	int addr_length = sizeof ( _addr );
 	new_socket._sock = ::accept ( _sock, ( sockaddr * ) &_addr, ( socklen_t * ) &addr_length );
 	if ( new_socket._sock <= 0 ){

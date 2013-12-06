@@ -83,41 +83,45 @@ void BrokerSendTask::run(){
 		srcMsg = clnode->getBrokerSendMessage();
 
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
-			D_MQTT("     PUBLISH      >>>>   Broker\n");
-
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     PUBLISH      >>>>    Broker     %s\n", msgPrint(msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
-			D_MQTT("     PUBACK       >>>>   Broker\n");
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
-			D_MQTT("     PINGREQ      >>>>   Broker\n");
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     PINGREQ      >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
-			D_MQTT("     SUBSCRIBE    >>>>   Broker\n");
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     SUBSCRIBE    >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
-			D_MQTT("     UNSUBSCRIBE  >>>>   Broker\n");
-
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     UNSUBSCRIBE  >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
-			D_MQTT("     CONNECT      >>>>   Broker\n");
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     CONNECT      >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
-			D_MQTT("     DISCONNECT   >>>>   Broker\n");
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("     DISCONNECT   >>>>    Broker     %s\n", msgPrint(msg));
+
 		}
 
 		int rc = 0;
@@ -150,7 +154,19 @@ void BrokerSendTask::run(){
 
 		delete ev;
 	}
-
 }
 
+
+char*  BrokerSendTask::msgPrint(MQTTMessage* msg){
+	uint8_t sbuf[512];
+	char* buf = _printBuf;
+	msg->serialize(sbuf);
+
+	for(int i = 0; i < msg->getRemainLength(); i++){
+		sprintf(buf, " 0x%02X", *( sbuf + msg->getRemainLengthSize() + i));
+		buf += 5;
+	}
+	*buf = 0;
+	return _printBuf;
+}
 

@@ -64,8 +64,8 @@ public:
 	// Server initialization
 	bool create();
 	bool bind( const int port );
-	bool listen() const;
-	bool accept( Socket& ) const;
+	bool listen();
+	bool accept( Socket& );
 
 	// Client initialization
 	bool connect( const string host, const int port );
@@ -76,11 +76,13 @@ public:
 
 	void setNonBlocking( const bool );
 
-	bool isValid() const { return _sock != -1; }
-	int getSock() const {return _sock;}
+	bool isValid();
+	int getSock(){return _sock;}
 private:
 	int _sock;
 	sockaddr_in _addr;
+	Semaphore _sem;
+	bool   _disconReq;
 
 };
 

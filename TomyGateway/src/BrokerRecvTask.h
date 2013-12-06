@@ -45,9 +45,11 @@ public:
 	BrokerRecvTask(GatewayResourcesProvider* res);
 	~BrokerRecvTask();
 	void run();
+	char* msgPrint(MQTTMessage* msg);
 private:
 	void recvAndFireEvent(ClientNode*);
 	GatewayResourcesProvider* _res;
+	char _printBuf[512];
 };
 
 
