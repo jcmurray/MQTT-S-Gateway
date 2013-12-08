@@ -673,7 +673,7 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 void GatewayControlTask::handlePingresp(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
 	MQTTSnPingResp* snMsg = new MQTTSnPingResp();
-
+	D_MQTT("     PINGREQ     >>>>    %s    %s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
 	Event* ev1 = new Event();
@@ -801,7 +801,7 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 		snMsg->setDup();
 	}
 	clnode->setClientSendMessage(snMsg);
-
+	D_MQTT("     PUBLISH      >>>>    %s    %s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);

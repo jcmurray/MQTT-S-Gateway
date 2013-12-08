@@ -127,60 +127,51 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
 	while(recvLength > 0){
 
-		switch(*packet & 0xf0){
-			case MQTT_TYPE_PUBACK:{
-				MQTTPubAck* puback = new MQTTPubAck();
-				puback->deserialize(packet);
-				D_MQTT("     PUBACK       <<<<    Broker     %s\n", msgPrint(puback));
+		if((*packet & 0xf0) == MQTT_TYPE_PUBACK){
+			MQTTPubAck* puback = new MQTTPubAck();
+			puback->deserialize(packet);
+			D_MQTT("     PUBACK       <<<<    Broker     %s\n", msgPrint(puback));
 
-				clnode->setBrokerRecvMessage(puback);
-				break;
-			}
-			case MQTT_TYPE_PUBLISH:{
-				MQTTPublish* publish = new MQTTPublish();
-				publish->deserialize(packet);
-				D_MQTT("\n     PUBLISH      <<<<    Broker     %s\n", msgPrint(publish));
+			clnode->setBrokerRecvMessage(puback);
 
-				clnode->setBrokerRecvMessage(publish);
-				break;
-			}
-			case MQTT_TYPE_SUBACK:{
-				MQTTSubAck* suback = new MQTTSubAck();
-				suback->deserialize(packet);
-				D_MQTT("     SUBACK       <<<<    Broker     %s\n", msgPrint(suback));
+		}else if((*packet & 0xf0) == MQTT_TYPE_PUBLISH){
+			MQTTPublish* publish = new MQTTPublish();
+			publish->deserialize(packet);
+			D_MQTT("\n     PUBLISH      <<<<    Broker     %s\n", msgPrint(publish));
 
-				clnode->setBrokerRecvMessage(suback);
-				break;
-			}
-			case MQTT_TYPE_PINGRESP:{
-				MQTTPingResp* pingresp = new MQTTPingResp();
-				pingresp->deserialize(packet);
-				D_MQTT("     PINGRESP     <<<<    Broker     %s\n", msgPrint(pingresp));
+			clnode->setBrokerRecvMessage(publish);
 
-				clnode->setBrokerRecvMessage(pingresp);
-				break;
-			}
-			case MQTT_TYPE_UNSUBACK:{
-				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
-				unsuback->deserialize(packet);
-				D_MQTT("     UNSUBACK     <<<<    Broker     %s\n", msgPrint(unsuback));
+		}else if((*packet & 0xf0) == MQTT_TYPE_SUBACK){
+			MQTTSubAck* suback = new MQTTSubAck();
+			suback->deserialize(packet);
+			D_MQTT("     SUBACK       <<<<    Broker     %s\n", msgPrint(suback));
 
-				clnode->setBrokerRecvMessage(unsuback);
-				break;
-			}
-			case MQTT_TYPE_CONNACK:{
-				MQTTConnAck* connack = new MQTTConnAck();
-				connack->deserialize(packet);
-				D_MQTT("     CONNACK      <<<<    Broker     %s\n", msgPrint(connack));
+			clnode->setBrokerRecvMessage(suback);
 
-				clnode->setBrokerRecvMessage(connack);
-				break;
-			}
-			default:{
-				D_MQTT("     UNKOWN_TYPE  packetLength=%d\n",recvLength);
-				return;
-				break;
-			}
+		}else if((*packet & 0xf0) == MQTT_TYPE_PINGRESP){
+			MQTTPingResp* pingresp = new MQTTPingResp();
+			pingresp->deserialize(packet);
+			D_MQTT("     PINGRESP     <<<<    Broker     %s\n", msgPrint(pingresp));
+
+			clnode->setBrokerRecvMessage(pingresp);
+
+		}else if((*packet & 0xf0) == MQTT_TYPE_UNSUBACK){
+			MQTTUnsubAck* unsuback = new MQTTUnsubAck();
+			unsuback->deserialize(packet);
+			D_MQTT("     UNSUBACK     <<<<    Broker     %s\n", msgPrint(unsuback));
+
+			clnode->setBrokerRecvMessage(unsuback);
+
+		}else if((*packet & 0xf0) == MQTT_TYPE_CONNACK){
+			MQTTConnAck* connack = new MQTTConnAck();
+			connack->deserialize(packet);
+			D_MQTT("     CONNACK      <<<<    Broker     %s\n", msgPrint(connack));
+
+			clnode->setBrokerRecvMessage(connack);
+
+		}else{
+			D_MQTT("     UNKOWN_TYPE  packetLength=%d\n",recvLength);
+			return;
 		}
 
 		Event* ev = new Event();

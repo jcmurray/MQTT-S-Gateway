@@ -1503,6 +1503,7 @@ uint16_t MQTTConnect::serialize(uint8_t* buf){
 	}
 	RemainingLength remLen;
 	remLen.encode(len);
+	_remainLength = len;
 
 	*buf++ = _type | _flags;
 	remLen.serialize(buf);
