@@ -39,6 +39,11 @@
 #include "libmq/Socket.h"
 #include "libmq/Topics.h"
 
+#define ARGV_GATEWAY_ID  1
+#define ARGV_DEVICE_NAME 2
+#define ARGV_BROKER_ADDR 3
+#define ARGV_BROKER_PORT 4
+
 /*=====================================
         Class MessageQue
  =====================================*/

@@ -130,42 +130,42 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 		if((*packet & 0xf0) == MQTT_TYPE_PUBACK){
 			MQTTPubAck* puback = new MQTTPubAck();
 			puback->deserialize(packet);
-			D_MQTT("     PUBACK       <<<<    Broker     %s\n", msgPrint(puback));
+			D_MQTT("     PUBACK       <<<<    Broker    %s\n", msgPrint(puback));
 
 			clnode->setBrokerRecvMessage(puback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_PUBLISH){
 			MQTTPublish* publish = new MQTTPublish();
 			publish->deserialize(packet);
-			D_MQTT("\n     PUBLISH      <<<<    Broker     %s\n", msgPrint(publish));
+			D_MQTT("\n     PUBLISH      <<<<    Broker    %s\n", msgPrint(publish));
 
 			clnode->setBrokerRecvMessage(publish);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_SUBACK){
 			MQTTSubAck* suback = new MQTTSubAck();
 			suback->deserialize(packet);
-			D_MQTT("     SUBACK       <<<<    Broker     %s\n", msgPrint(suback));
+			D_MQTT("     SUBACK       <<<<    Broker    %s\n", msgPrint(suback));
 
 			clnode->setBrokerRecvMessage(suback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_PINGRESP){
 			MQTTPingResp* pingresp = new MQTTPingResp();
 			pingresp->deserialize(packet);
-			D_MQTT("     PINGRESP     <<<<    Broker     %s\n", msgPrint(pingresp));
+			D_MQTT("     PINGRESP     <<<<    Broker    %s\n", msgPrint(pingresp));
 
 			clnode->setBrokerRecvMessage(pingresp);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_UNSUBACK){
 			MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 			unsuback->deserialize(packet);
-			D_MQTT("     UNSUBACK     <<<<    Broker     %s\n", msgPrint(unsuback));
+			D_MQTT("     UNSUBACK     <<<<    Broker    %s\n", msgPrint(unsuback));
 
 			clnode->setBrokerRecvMessage(unsuback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_CONNACK){
 			MQTTConnAck* connack = new MQTTConnAck();
 			connack->deserialize(packet);
-			D_MQTT("     CONNACK      <<<<    Broker     %s\n", msgPrint(connack));
+			D_MQTT("     CONNACK      <<<<    Broker    %s\n", msgPrint(connack));
 
 			clnode->setBrokerRecvMessage(connack);
 
@@ -196,6 +196,6 @@ char*  BrokerRecvTask::msgPrint(MQTTMessage* msg){
 		sprintf(buf, " 0x%02X", *( sbuf + msg->getRemainLengthSize() + i));
 		buf += 5;
 	}
-	*buf = 0;
+	*buf = 0;  // NULL terminate
 	return _printBuf;
 }

@@ -385,7 +385,7 @@ void XBee::readPacket(){
 		case 2:
 		  _response.setLsbLength(_bd);
 		  _pos++;
-		  D_ZBEESTACK( " ===> Start: length=%d", _response.getPacketLength() );
+		  D_ZBEESTACK("\r\n===> Recv start: ");
 		  break;
 		case 3:
 		  _response.setApiId(_bd);
@@ -412,7 +412,7 @@ void XBee::readPacket(){
 			  buf[_pos - 4] = _bd;
 			  _pos++;
 			  if (_response.getApiId() == XB_RX_RESPONSE && _pos == 15){
-				  D_ZBEESTACK( "\n Payload ==> ");
+				  D_ZBEESTACK( "\r\n     Payload: ");
 			  }
 		  }
 		  break;
@@ -421,16 +421,17 @@ void XBee::readPacket(){
 }
 
 bool XBee::receiveResponse(XBResponse* response){
+
     while(true){
     	readPacket();
 
         if(_response.isAvailable()){
-        	D_ZBEESTACK("<== CheckSum OK\n" );
+        	D_ZBEESTACK("\r\n<=== CheckSum OK\r\n\n");
 			response->absorb(&_response);
             return true;
 
         }else if(_response.isError()){
-        	D_ZBEESTACK("  <== Packet Error Code = %d\n", _response.getErrorCode() );
+        	D_ZBEESTACK("\r\n<=== Packet Error Code = %d\r\n\n",_response.getErrorCode());
 			_response.reset();
 			response->reset();
             return false;
@@ -444,6 +445,8 @@ void XBee::setSerialPort(SerialPort *serialPort){
 }
 
 void XBee::sendRequest(XBRequest &request){
+	D_ZBEESTACK("\r\n===> Send start: ");
+
 	sendByte(START_BYTE, false);
 
 	uint8_t msbLen = ((request.getFrameDataLength() + 1) >> 8) & 0xff; // 1 = 1B(Api)  except Checksum
@@ -458,7 +461,7 @@ void XBee::sendRequest(XBRequest &request){
 
 	for( int i = 0; i < request.getFrameDataLength(); i++ ){
 	  if (request.getApiId() == XB_TX_REQUEST && i == 13){
-		  D_ZBEESTACK( "\n Payload ==> ");
+		  D_ZBEESTACK("\r\n     Payload:    ");
 	  }
 	  sendByte(request.getFrameData(i), true);
 	  checksum+= request.getFrameData(i);
@@ -466,9 +469,9 @@ void XBee::sendRequest(XBRequest &request){
 	checksum = 0xff - checksum;
 	sendByte(checksum, true);
 
-	flush();  // clear receive buffer
+	//flush();  // clear receive buffer
 
-	D_ZBEESTACK("\n" );
+	D_ZBEESTACK("\r\n<=== Send completed\r\n\n" );
 }
 
 void XBee::sendByte(uint8_t b, bool escape){
@@ -595,7 +598,7 @@ bool SerialPort::send(unsigned char b){
 	if (write(_fd, &b,1) != 1){
 	    return false;
 	}else{
-		D_ZBEESTACK( " S:0x%x", b);
+		D_ZBEESTACK( " 0x%x", b);
 	    return true;
 	}
 }
@@ -604,7 +607,7 @@ bool SerialPort::recv(unsigned char* buf){
 	if(read(_fd, buf, 1) == 0){
 	    return false;
 	}else{
-		D_ZBEESTACK( " R:0x%x",buf[0] );
+		D_ZBEESTACK( " 0x%x",buf[0] );
 	    return true;
 	}
 }

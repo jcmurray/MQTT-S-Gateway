@@ -28,11 +28,12 @@ Usage
     
 ####3)  Start Gateway  
     
-    $ TomyGateway /dev/ttyUSB0  ["localhost"] [1883]
+    $ TomyGateway 1 /dev/ttyUSB0  ["localhost"] [1883]
     
-  argv 1: Device which XBee dongle connected  
-  argv 2: Broker IP Address ( default value "localhost" )  
-  argv 3: Port No  ( default value 1883 )  
+  argv 1: Gateway Id (numeric 1 - 255)  
+  argv 2: Device which XBee dongle connected  
+  argv 3: Broker IP Address ( default value "localhost" )  
+  argv 4: Port No  ( default value 1883 )  
          
 XBee configurations
 ----------------------

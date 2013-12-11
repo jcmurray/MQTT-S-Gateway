@@ -54,7 +54,7 @@ ClientRecvTask::~ClientRecvTask(){
 
 void ClientRecvTask::run(){
 
-	if(_sp.begin(_res->getArgv()[1], B57600, O_RDONLY) == -1){
+	if(_sp.begin(_res->getArgv()[ARGV_DEVICE_NAME], B57600, O_RDONLY) == -1){
 		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");
 	}
 	_zb.setSerialPort(&_sp);

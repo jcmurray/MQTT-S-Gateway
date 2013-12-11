@@ -65,11 +65,11 @@ void BrokerSendTask::run(){
 
 	int port = BROKER_PORT;
 
-	if(_res->getArgc() > 2){
-		host = _res->getArgv()[2];
+	if(_res->getArgc() > ARGV_BROKER_ADDR){
+		host = _res->getArgv()[ARGV_BROKER_ADDR];
 	}
-	if(_res->getArgc() > 3){
-		port = atoi(_res->getArgv()[3]);
+	if(_res->getArgc() > ARGV_BROKER_PORT){
+		port = atoi(_res->getArgv()[ARGV_BROKER_PORT]);
 	}
 
 	while(true){
@@ -85,42 +85,42 @@ void BrokerSendTask::run(){
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PUBLISH      >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     PUBLISH      >>>>    Broker    %s\n", msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PUBACK       >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     PUBACK       >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     PINGREQ      >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     PINGREQ      >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     SUBSCRIBE    >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     SUBSCRIBE    >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     UNSUBSCRIBE  >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     UNSUBSCRIBE  >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     CONNECT      >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     CONNECT      >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
-			D_MQTT("     DISCONNECT   >>>>    Broker     %s\n", msgPrint(buffer,msg));
+			D_MQTT("     DISCONNECT   >>>>    Broker    %s\n", msgPrint(buffer,msg));
 
 		}
 

@@ -61,8 +61,6 @@
 
 
 
-#define GATEWAY_ID        1
-
 #define MAX_CLIENT_NODES  500
 
 

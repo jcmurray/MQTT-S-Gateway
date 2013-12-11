@@ -54,7 +54,7 @@ void ClientSendTask::run(){
 
 	MQTTSnMessage* msg = new MQTTSnMessage();
 
-	if(_sp.begin(_res->getArgv()[1], B57600, O_WRONLY) == -1){
+	if(_sp.begin(_res->getArgv()[ARGV_DEVICE_NAME], B57600, O_WRONLY) == -1){
 		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");  // ABORT
 	}
 
