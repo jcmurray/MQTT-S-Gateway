@@ -1,9 +1,10 @@
 MQTT-S Gateway over XBee 
 ======
  
-  _Documents in TomyGateway directory will help you to understand the architecture of this program._ 
+  _Documents in TomyGateway directory will help you to understand the architecture of this program._     
   Raspberry Pi can run this Gateway.  
-  ![Raspberry Pi](http://www.youtube.com/watch?v=INa5YznfR-8&feature=youtu.be)  
+  http://www.youtube.com/watch?v=INa5YznfR-8&feature=youtu.be    
+  
 Supported functions
 -------------------
 
