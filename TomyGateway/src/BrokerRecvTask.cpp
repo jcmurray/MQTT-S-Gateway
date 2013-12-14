@@ -108,6 +108,7 @@ void BrokerRecvTask::run(){
  -----------------------------------------*/
 void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
+	uint8_t sbuff[SOCKET_MAXBUFFER_LENGTH * 5];
 	uint8_t buffer[SOCKET_MAXBUFFER_LENGTH];
 	memset(buffer, 0, SOCKET_MAXBUFFER_LENGTH);
 
@@ -130,42 +131,48 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 		if((*packet & 0xf0) == MQTT_TYPE_PUBACK){
 			MQTTPubAck* puback = new MQTTPubAck();
 			puback->deserialize(packet);
-			D_MQTT("     PUBACK       <<<<    Broker    %s\n", msgPrint(puback));
+			puback->serialize(sbuff);
+			D_MQTT("     PUBACK       <<<<    Broker    %s\n", msgPrint(sbuff, puback));
 
 			clnode->setBrokerRecvMessage(puback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_PUBLISH){
 			MQTTPublish* publish = new MQTTPublish();
 			publish->deserialize(packet);
-			D_MQTT("\n     PUBLISH      <<<<    Broker    %s\n", msgPrint(publish));
+			publish->serialize(sbuff);
+			D_MQTT("\n     PUBLISH      <<<<    Broker    %s\n", msgPrint(sbuff, publish));
 
 			clnode->setBrokerRecvMessage(publish);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_SUBACK){
 			MQTTSubAck* suback = new MQTTSubAck();
 			suback->deserialize(packet);
-			D_MQTT("     SUBACK       <<<<    Broker    %s\n", msgPrint(suback));
+			suback->serialize(sbuff);
+			D_MQTT("     SUBACK       <<<<    Broker    %s\n", msgPrint(sbuff, suback));
 
 			clnode->setBrokerRecvMessage(suback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_PINGRESP){
 			MQTTPingResp* pingresp = new MQTTPingResp();
 			pingresp->deserialize(packet);
-			D_MQTT("     PINGRESP     <<<<    Broker    %s\n", msgPrint(pingresp));
+			pingresp->serialize(sbuff);
+			D_MQTT("     PINGRESP     <<<<    Broker    %s\n", msgPrint(sbuff, pingresp));
 
 			clnode->setBrokerRecvMessage(pingresp);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_UNSUBACK){
 			MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 			unsuback->deserialize(packet);
-			D_MQTT("     UNSUBACK     <<<<    Broker    %s\n", msgPrint(unsuback));
+			unsuback->serialize(sbuff);
+			D_MQTT("     UNSUBACK     <<<<    Broker    %s\n", msgPrint(sbuff, unsuback));
 
 			clnode->setBrokerRecvMessage(unsuback);
 
 		}else if((*packet & 0xf0) == MQTT_TYPE_CONNACK){
 			MQTTConnAck* connack = new MQTTConnAck();
 			connack->deserialize(packet);
-			D_MQTT("     CONNACK      <<<<    Broker    %s\n", msgPrint(connack));
+			connack->serialize(sbuff);
+			D_MQTT("     CONNACK      <<<<    Broker    %s\n", msgPrint(sbuff, connack));
 
 			clnode->setBrokerRecvMessage(connack);
 
@@ -187,15 +194,16 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 }
 
 
-char*  BrokerRecvTask::msgPrint(MQTTMessage* msg){
-	uint8_t sbuf[512];
+char*  BrokerRecvTask::msgPrint(uint8_t* buffer, MQTTMessage* msg){
 	char* buf = _printBuf;
-	msg->serialize(sbuf);
+
+	sprintf(buf, " 0x%02X", *buffer);
+	buf += 5;
 
 	for(int i = 0; i < msg->getRemainLength(); i++){
-		sprintf(buf, " 0x%02X", *( sbuf + msg->getRemainLengthSize() + i));
+		sprintf(buf, " 0x%02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
 		buf += 5;
 	}
-	*buf = 0;  // NULL terminate
+	*buf = 0;
 	return _printBuf;
 }

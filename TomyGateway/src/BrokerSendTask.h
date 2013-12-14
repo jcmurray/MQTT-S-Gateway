@@ -47,7 +47,7 @@ public:
 	char* msgPrint(uint8_t* buffer, MQTTMessage* msg);
 private:
 	GatewayResourcesProvider* _res;
-	char _printBuf[512];
+	char _printBuf[SOCKET_MAXBUFFER_LENGTH * 5];
 };
 
 

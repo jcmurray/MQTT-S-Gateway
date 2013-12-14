@@ -697,7 +697,6 @@ public:
 	~MQTTUnsubAck();
 	void setMessageId(uint16_t);
 	uint16_t getMessageId();
-	void serialize(uint8_t* buf);
 };
 
 /*=====================================
