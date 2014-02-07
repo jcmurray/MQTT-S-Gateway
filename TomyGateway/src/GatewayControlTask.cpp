@@ -658,13 +658,13 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 		D_MQTT("     PUBACK       >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
 		if(snMsg->getMsgId() != mqMsg->getMessageId()){
 			delete snMsg;
-			return;
+			clnode->setWaitedPubAck(NULL);
+		}else{
+			clnode->setClientSendMessage(snMsg);
+			Event* ev1 = new Event();
+			ev1->setClientSendEvent(clnode);
+			_res->getClientSendQue()->post(ev1);
 		}
-
-		clnode->setClientSendMessage(snMsg);
-		Event* ev1 = new Event();
-		ev1->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(ev1);
 	}
 }
 
@@ -692,17 +692,17 @@ void GatewayControlTask::handleSuback(Event* ev, ClientNode* clnode, MQTTMessage
 	if(snMsg){
 		if(snMsg->getMsgId() != mqMsg->getMessageId()){
 			delete snMsg;
-			return;
+			clnode->setWaitedSubAck(NULL);
 		}else{
 			snMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
 			snMsg->setQos(mqMsg->getGrantedQos());
-		}
-		D_MQTT("     SUBACK       >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
-		clnode->setClientSendMessage(snMsg);
+			D_MQTT("     SUBACK       >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
+			clnode->setClientSendMessage(snMsg);
 
-		Event* ev1 = new Event();
-		ev1->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(ev1);
+			Event* ev1 = new Event();
+			ev1->setClientSendEvent(clnode);
+			_res->getClientSendQue()->post(ev1);
+		}
 	}
 }
 
