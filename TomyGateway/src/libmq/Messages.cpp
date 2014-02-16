@@ -45,63 +45,9 @@
 extern uint16_t getUint16(uint8_t* pos);
 extern void setUint16(uint8_t* pos, uint16_t val);
 extern uint8_t* mqcalloc(uint8_t length);
+extern void utfSerialize(uint8_t* pos, string str);
 
 using namespace tomyGateway;
-
-/*=====================================
-        Class UTFString
- ======================================*/
-UTFString::UTFString() : string(){
-
-}
-
-UTFString::UTFString(const char *str) : string(str){
-
-}
-
-UTFString::UTFString(const string &str) : string(str){
-
-}
-
-UTFString::UTFString(uint8_t *pos){
-	uint16_t len = getUint16(pos) / sizeof(char);
-	this->assign((const char*)(pos + 2), len);
-}
-
-UTFString::~UTFString(){
-
-}
-
-UTFString& UTFString::operator=(const string& str){
-	string::operator= (str);
-	return *this;
-}
-
-UTFString& UTFString::operator=(UTFString ustr){
-	string::operator=(ustr);
-	return *this;
-}
-
-bool UTFString::operator==(UTFString &str){
-	return (compare(str) == 0);
-}
-
-bool UTFString::operator!=(UTFString &str){
-	return (compare(str) != 0);
-}
-
-void UTFString::serialize(uint8_t *pos){
-	setUint16(pos, this->length() * sizeof(char));
-	this->copy((char*)(pos + 2), this->size(), 0);
-}
-
-uint8_t UTFString::getByteLength(){
-	return this->length() * sizeof(char);
-}
-
-uint8_t UTFString::size(){
-	return this->getByteLength() + 2 ;
-}
 
 
 /*=====================================
@@ -281,12 +227,12 @@ MQTTSnConnect::MQTTSnConnect(){
     getBodyPtr()[1] = MQTTSN_PROTOCOL_ID;
 }
 
-MQTTSnConnect::MQTTSnConnect(UTFString* id){
+MQTTSnConnect::MQTTSnConnect(string* id){
     setMessageLength(id->size() + 6);
     allocate();
     setType(MQTTSN_TYPE_CONNECT);
     getBodyPtr()[1] = MQTTSN_PROTOCOL_ID;
-    id->serialize(getBodyPtr() + 4);
+    id->copy((char*)getBodyPtr() + 4,id->size(),0);
 }
 
 MQTTSnConnect::~MQTTSnConnect(){
@@ -317,12 +263,12 @@ uint16_t MQTTSnConnect::getDuration(){
     return getUint16((uint8_t*)getBodyPtr() + 2);
 }
 
-void MQTTSnConnect::setClientId(UTFString id){
+void MQTTSnConnect::setClientId(string id){
 	_clientId = id;
 }
 
-UTFString* MQTTSnConnect::getClientId(){
-	_clientId = UTFString(getBodyPtr() + 4);
+string* MQTTSnConnect::getClientId(){
+	_clientId = string((char*)(getBodyPtr() + 4), getMessageLength() -4 );
     return &_clientId;
 }
 
@@ -332,8 +278,8 @@ void MQTTSnConnect::absorb(XBResponse* src){
 
 void MQTTSnConnect::absorb(MQTTSnMessage* src){
 	setMessageLength(src->getMessageLength());
-	UTFString id =  UTFString(src->getBodyPtr() + 4);
-	setClientId(id);
+	//string id =  string(src->getBodyPtr() + 4);
+	setClientId(*getClientId());
 	setFlags(src->getBodyPtr()[0]);
 	setDuration(getUint16(src->getBodyPtr() + 2));
 	MQTTSnMessage::absorb(src);
@@ -395,15 +341,15 @@ void MQTTSnWillTopic::setFlags(uint8_t flags){
     _flags = flags;
 }
 
-void MQTTSnWillTopic::setWillTopic(UTFString* topic){
+void MQTTSnWillTopic::setWillTopic(string* topic){
     setMessageLength(topic->size() + 3);
     allocate();
-    topic->serialize(getBodyPtr() + 1);
+    topic->copy((char*)getBodyPtr() + 1,topic->size() ,0);
     _message[2] = _flags;
     _topicName = *topic;
 }
 
-UTFString* MQTTSnWillTopic::getWillTopic(){
+string* MQTTSnWillTopic::getWillTopic(){
 	if (_message){
 		return &_topicName;
 	}else{
@@ -425,7 +371,7 @@ void MQTTSnWillTopic::absorb(XBResponse* src){
 
 void MQTTSnWillTopic::absorb(MQTTSnMessage* src){
 	setFlags(src->getBodyPtr()[0]);
-	_topicName = UTFString(src->getBodyPtr() + 1);
+	_topicName = string((char*)src->getBodyPtr() + 1, src->getMessageLength() - 3);
 	MQTTSnMessage::absorb(src);
 }
 
@@ -456,14 +402,14 @@ MQTTSnWillMsg::~MQTTSnWillMsg(){
 
 }
 
-void MQTTSnWillMsg::setWillMsg(UTFString* msg){
+void MQTTSnWillMsg::setWillMsg(string* msg){
     setMessageLength(2 + msg->size());
     allocate();
-    msg->serialize(getBodyPtr());
+    msg->copy((char*)getBodyPtr(),msg->size(),0);
     _willMsg = *msg;
 }
 
-UTFString* MQTTSnWillMsg::getWillMsg(){
+string* MQTTSnWillMsg::getWillMsg(){
 	return &_willMsg;
 }
 
@@ -472,7 +418,7 @@ void MQTTSnWillMsg::absorb(XBResponse* src){
 }
 
 void MQTTSnWillMsg::absorb(MQTTSnMessage* src){
-	_willMsg = UTFString(src->getBodyPtr());
+	_willMsg = string((char*)src->getBodyPtr(), src->getMessageLength() - 2);
 	MQTTSnMessage::absorb(src);
 }
 /*=====================================
@@ -509,10 +455,10 @@ uint16_t MQTTSnRegister::getMsgId(){
     return _msgId;
 
 }
-void MQTTSnRegister::setTopicName(UTFString* topicName){
+void MQTTSnRegister::setTopicName(string* topicName){
     setMessageLength(6 + topicName->size());
     allocate();
-    topicName->serialize(getBodyPtr() + 4);
+    topicName->copy((char*)getBodyPtr() + 4, topicName->size(),0);
     setTopicId(_topicId);
     setMsgId(_msgId);
 }
@@ -523,14 +469,14 @@ void MQTTSnRegister::setFrame(uint8_t* data, uint8_t len){
     memcpy(getBodyPtr(), data, len);
     _topicId = getUint16(data);
     _msgId = getUint16(data + 2);
-    _topicName = UTFString(getBodyPtr() + 4);
+    _topicName = string((char*)getBodyPtr() + 4, len - 4);
 }
 
 void MQTTSnRegister::setFrame(XBResponse* resp){
     setFrame(resp->getPayloadPtr() + MQTTSN_HEADER_SIZE, resp->getPayloadPtr()[0] - MQTTSN_HEADER_SIZE);
 }
 
-UTFString* MQTTSnRegister::getTopicName(){
+string* MQTTSnRegister::getTopicName(){
     return &_topicName;
 }
 
@@ -541,7 +487,7 @@ void MQTTSnRegister::absorb(XBResponse* src){
 void MQTTSnRegister::absorb(MQTTSnMessage* src){
 	_topicId = getUint16((uint8_t*)(src->getBodyPtr()));
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +2));
-	_topicName = UTFString((uint8_t*)(src->getBodyPtr() + 4));
+	_topicName = string((char*)src->getBodyPtr() + 4, src->getMessageLength() - 6);
 	MQTTSnMessage::absorb(src);
 }
 
@@ -810,17 +756,17 @@ uint16_t MQTTSnSubscribe::getMsgId(){
     }
     return _msgId;
 }
-void MQTTSnSubscribe::setTopicName(UTFString* data){
+void MQTTSnSubscribe::setTopicName(string* data){
     setMessageLength(5 + data->size());
     allocate();
-    data->serialize(getBodyPtr() + 3);
+    data->copy((char*)getBodyPtr() + 3, data->size(),0);
     setMsgId(_msgId);
     setFlags(_flags | MQTTSN_TOPIC_TYPE_NORMAL);
     _topicName = *data;
 }
 
 
-UTFString*  MQTTSnSubscribe::getTopicName(){
+string*  MQTTSnSubscribe::getTopicName(){
     return &_topicName;
 }
 
@@ -832,7 +778,7 @@ void MQTTSnSubscribe::setFrame(uint8_t* data, uint8_t len){
     _flags = *data;
     if ((_flags & MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_NORMAL){
         _topicId = 0;
-        _topicName = UTFString(data + 3);
+        _topicName = string((char*)data + 3, len);
     }else{
         _topicId = getUint16(data + 3);
     }
@@ -850,7 +796,7 @@ void MQTTSnSubscribe::absorb(MQTTSnMessage* src){
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +1));
 	_flags = src->getBodyPtr()[0];
 	if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_SHORT ){
-		_topicName = UTFString((uint8_t*)(src->getBodyPtr() + 3));
+		_topicName = string((char*)src->getBodyPtr() + 3, src->getMessageLength() - 5);
 	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_PREDEFINED){
 		 _topicId = getUint16(getBodyPtr() +3);
 	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_NORMAL){
@@ -938,7 +884,7 @@ void MQTTSnUnsubscribe::setFlags(uint8_t flags){
     }
 }
 
-UTFString* MQTTSnUnsubscribe::getTopicName(){
+string* MQTTSnUnsubscribe::getTopicName(){
 	return &_topicName;
 }
 
@@ -980,15 +926,15 @@ uint16_t MQTTSnUnsubAck::getMsgId(){
  ======================================*/
 MQTTSnPingReq::MQTTSnPingReq(){
 	setMessageLength(2);
-	  setType(MQTTSN_TYPE_PINGREQ);
-	  allocate();
+	setType(MQTTSN_TYPE_PINGREQ);
+	allocate();
 }
 
-MQTTSnPingReq::MQTTSnPingReq(UTFString* id){
+MQTTSnPingReq::MQTTSnPingReq(string* id){
   setMessageLength(id->size() + 2);
   setType(MQTTSN_TYPE_PINGREQ);
   allocate();
-  id->serialize(getBodyPtr());
+  id->copy((char*)getBodyPtr(),id->size(),0);
 
 }
 MQTTSnPingReq::~MQTTSnPingReq(){
@@ -1368,20 +1314,21 @@ uint16_t MQTTUnsubscribe::getMessageId(){
 	return _messageId;
 }
 
-void MQTTUnsubscribe::setTopicName(UTFString* topic){
+void MQTTUnsubscribe::setTopicName(string* topic){
 	_topic = *topic;
 }
 
 uint16_t MQTTUnsubscribe::serialize(uint8_t* buf){
 	RemainingLength remLen;
-	remLen.encode(2 + _topic.size());
+	_remainLength = _topic.size() + 4;
+	remLen.encode(_remainLength);
 
 	*buf++ = _type | _flags;
 	remLen.serialize(buf);
 	buf += remLen.getSize();
 	setUint16(buf, _messageId);
 	buf += 2;
-	_topic.serialize(buf);
+	utfSerialize(buf,_topic);
 	return 1 + remLen.getSize() + remLen.decode();
 }
 
@@ -1408,22 +1355,24 @@ uint16_t MQTTSubscribe::getMessageId(){
 	return _messageId;
 }
 
-void MQTTSubscribe::setTopic(UTFString* topic, uint8_t qos){
+void MQTTSubscribe::setTopic(string* topic, uint8_t qos){
 	_topic = *topic;
 	_qos =qos;
 }
 
 uint16_t MQTTSubscribe::serialize(uint8_t* buf){
 	RemainingLength remLen;
-	remLen.encode(2 + _topic.size() + 1);  // MessageId = 2, QoS = 1
+	_remainLength = _topic.size() + 5; // MessageID:2, length:2, Topic:n, QoS:1
+	remLen.encode(_remainLength);
 
 	*buf++ = _type | _flags;
 	remLen.serialize(buf);
 	buf += remLen.getSize();
 	setUint16(buf, _messageId);
 	buf += 2;
-	_topic.serialize(buf);
-	*(buf + _topic.size()) = _qos;
+	utfSerialize(buf,_topic);
+	buf += 2 + _topic.size();
+	*buf = _qos;
 	return 1 + remLen.getSize() + remLen.decode();
 }
 /*=====================================
@@ -1448,25 +1397,25 @@ void MQTTConnect::setKeepAliveTime(uint16_t sec){
 	_keepAliveTime = sec;
 }
 
-void MQTTConnect::setUserName(UTFString* userName){
+void MQTTConnect::setUserName(string* userName){
 	_userName = *userName;
 	_connectFlags &= 0x7f;
 	_connectFlags |= 0x80;
 }
 
-void MQTTConnect::setPassword(UTFString* pw){
+void MQTTConnect::setPassword(string* pw){
 	_password = *pw;
 	_connectFlags &= 0xbf;
 	_connectFlags |= 0x40;
 }
 
-void MQTTConnect::setWillMessage(UTFString* wm){
+void MQTTConnect::setWillMessage(string* wm){
 	_willMessage = *wm;
 	_connectFlags &= 0xdb;
 	_connectFlags |= 0x04;
 }
 
-void MQTTConnect::setWillTopic(UTFString* tp){
+void MQTTConnect::setWillTopic(string* tp){
 	_willTopic = *tp;
 	_connectFlags &= 0xdb;
 	_connectFlags |= 0x04;
@@ -1477,7 +1426,7 @@ void MQTTConnect::setWillQos(uint8_t qos){
 	_connectFlags |= (qos << 3);
 }
 
-void MQTTConnect::setClientId(UTFString* cid){
+void MQTTConnect::setClientId(string* cid){
 	_clientId = *cid;
 }
 
@@ -1489,17 +1438,17 @@ void MQTTConnect::setCleanSessionFlg(){
 
 uint16_t MQTTConnect::serialize(uint8_t* buf){
 	uint16_t len = 12;
-	len += _clientId.size();
+	len += _clientId.size() + 2;
 
 	if(_connectFlags & 0x0c){  // Will Topic & Message
-		len += _willTopic.size();
-		len += _willMessage.size();
+		len += _willTopic.size() + 2;
+		len += _willMessage.size() + 2;
 	}
 	if(_connectFlags & 0x80){  // User Name
-		len += _userName.size();
+		len += _userName.size() + 2;
 	}
 	if(_connectFlags & 0x40){  // Password
-		len += _password.size();
+		len += _password.size() + 2;
 	}
 	RemainingLength remLen;
 	remLen.encode(len);
@@ -1508,28 +1457,28 @@ uint16_t MQTTConnect::serialize(uint8_t* buf){
 	*buf++ = _type | _flags;
 	remLen.serialize(buf);
 	buf += remLen.getSize();
-	UTFString protocol = MQTT_PROTOCOL_NAME;
-	protocol.serialize(buf);
-	buf += protocol.size();
+	string protocol = MQTT_PROTOCOL_NAME;
+	utfSerialize(buf, protocol);
+	buf += protocol.size() + 2;
 	*buf++ = MQTT_PROTOCOL_VERSION;
 	*buf++ = _connectFlags;
 	setUint16(buf++, _keepAliveTime);
 
-	_clientId.serialize(++buf); // copy clienId
-	buf += _clientId.size();
+	utfSerialize(++buf,_clientId); // copy clienId
+	buf += _clientId.size() + 2;
 
 	if(_connectFlags & 0x0c){  // Will Topic & Message
-		_willTopic.serialize(buf);
-		buf += _willTopic.size();
-		_willMessage.serialize(buf);
-		buf += _willMessage.size();
+		utfSerialize(buf,_willTopic);
+		buf += _willTopic.size() + 2;
+		utfSerialize(buf,_willMessage);
+		buf += _willMessage.size() + 2;
 	}
 	if(_connectFlags & 0x80){  // User Name
-		_userName.serialize(buf);
-		buf += _userName.size();
+		utfSerialize(buf,_userName);
+		buf += _userName.size() + 2;
 	}
 	if(_connectFlags & 0x40){  // Password
-		_password.serialize(buf);
+		utfSerialize(buf,_password);
 	}
 
 	return 1 + remLen.getSize() + remLen.decode();
@@ -1560,7 +1509,7 @@ uint16_t MQTTPublish::getMessageId(){
 	return _messageId;
 }
 
-UTFString* MQTTPublish::getTopic(){
+string* MQTTPublish::getTopic(){
 	return &_topic;
 }
 
@@ -1573,7 +1522,7 @@ uint8_t  MQTTPublish::getPayloadLength(){
 	return _len;
 }
 
-void MQTTPublish::setTopic(UTFString* topic){
+void MQTTPublish::setTopic(string* topic){
 	_topic = *topic;
 }
 
@@ -1590,14 +1539,14 @@ void MQTTPublish::setPayload(uint8_t* payload, uint8_t length){
 
 uint16_t MQTTPublish::serialize(uint8_t* buf){
 	RemainingLength remLen;
-	_remainLength = _topic.size() + 2 + _len; // topic,MessageID,Payload
+	_remainLength = _topic.size() + 2 + 2 + _len; // topic,MessageID,Payload
 	remLen.encode(_remainLength);
 
 	*buf++ = (_type & 0xf0) | (_flags & 0x0f);
 	remLen.serialize(buf);
 	buf += remLen.getSize();
-	_topic.serialize(buf);
-	buf += _topic.size();
+	utfSerialize(buf, _topic);
+	buf += _topic.size() + 2;
 	setUint16(buf, _messageId);
 	memcpy(buf + 2, _payload, _len);
 
@@ -1616,9 +1565,9 @@ bool MQTTPublish::deserialize(uint8_t* buf){
 	_remainLength = remLen.decode();
 
 	buf += 1 + remLen.getSize();
-	_topic = (uint8_t*)buf;
+	_topic = string((char*)buf + 2, getUint16(buf));
 
-	buf += _topic.size();
+	buf += _topic.size() + 2;
 	_messageId = getUint16(buf);
 
 	buf += 2;

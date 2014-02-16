@@ -369,7 +369,6 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 
 				Event *evpub = new Event();
 				evpub->setClientSendEvent(clnode);
-				D_MQTT("     PUBACK       >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(pub));
 				_res->getClientSendQue()->post(evpub);
 			}
 			delete subscribe;
@@ -674,7 +673,7 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 void GatewayControlTask::handlePingresp(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
 	MQTTSnPingResp* snMsg = new MQTTSnPingResp();
-	D_MQTT("     PINGREQ     >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
+	D_MQTT("     PINGRESP     >>>>    %-10s%s\n", clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
 	Event* ev1 = new Event();
@@ -765,7 +764,7 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 	MQTTPublish* mqMsg = static_cast<MQTTPublish*>(msg);
 	MQTTSnPublish* snMsg = new MQTTSnPublish();
 
-	UTFString* tp = mqMsg->getTopic();
+	string* tp = mqMsg->getTopic();
 	uint16_t tpId;
 
 	tpId = clnode->getTopics()->getTopicId(tp);

@@ -277,7 +277,7 @@ uint16_t ClientNode::getAddress16(){
     return _address16;
 }
 
-UTFString* ClientNode::getNodeId(){
+string* ClientNode::getNodeId(){
     return &_nodeId;
 }
 
@@ -298,7 +298,7 @@ void ClientNode::setAddress16(uint16_t addr){
     _address16 = addr;
 }
 
-void ClientNode::setNodeId(UTFString* id){
+void ClientNode::setNodeId(string* id){
 	_nodeId = *id;
 }
 

@@ -119,11 +119,6 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 	if (recvLength == -1){
 		D_MQTT(" Client : %s Broker Connection Error\n", clnode->getNodeId()->c_str());
 		clnode->updateStatus(Cstat_Disconnected);
-		MQTTDisconnect* disconnect = new MQTTDisconnect();
-		clnode->setBrokerRecvMessage(disconnect);
-		Event* ev = new Event();
-		ev->setBrokerRecvEvent(clnode);
-		_res->getGatewayEventQue()->post(ev);
 	}
 
 	while(recvLength > 0){

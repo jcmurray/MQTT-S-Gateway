@@ -43,7 +43,7 @@ Topic::Topic(){
 }
 
 
-Topic::Topic(UTFString topic){
+Topic::Topic(string topic){
 	_topicId = 0;
 	_topicStr = topic;
 }
@@ -57,12 +57,12 @@ uint16_t Topic::getTopicId(){
     return _topicId;
 }
 
-UTFString* Topic::getTopicName(){
+string* Topic::getTopicName(){
     return &_topicStr;
 }
 
 uint8_t Topic::getTopicLength(){
-    return _topicStr.getByteLength();
+    return (uint8_t)_topicStr.size();
 }
 
 void Topic::setTopicId(uint16_t id){
@@ -70,7 +70,7 @@ void Topic::setTopicId(uint16_t id){
 }
 
 
-void Topic::setTopicName(UTFString topic){
+void Topic::setTopicName(string topic){
     _topicStr = topic;
 }
 
@@ -121,7 +121,7 @@ bool Topic::isMatch(Topic* topic){
         Class Topics
  ======================================*/
 Topics::Topics(){
-	Topic* tp = new Topic(UTFString(MQTTSN_TOPIC_PREDEFINED_TIME));
+	Topic* tp = new Topic(string(MQTTSN_TOPIC_PREDEFINED_TIME));
 	tp->setTopicId(MQTTSN_TOPICID_PREDEFINED_TIME);
 	_topics.push_back(tp);
 	_cnt = 1;
@@ -137,7 +137,7 @@ Topics::~Topics() {
 }
 
 
-uint16_t Topics::getTopicId(UTFString* topic){
+uint16_t Topics::getTopicId(string* topic){
     Topic *p = getTopic(topic);
     if ( p != NULL) {
         return p->getTopicId();
@@ -146,7 +146,7 @@ uint16_t Topics::getTopicId(UTFString* topic){
 }
 
 
-Topic* Topics::getTopic(UTFString* topic) {
+Topic* Topics::getTopic(string* topic) {
     for (uint8_t i = 0; i < _cnt; i++) {
     	if(_topics[i]){
 			if( *topic == *(_topics[i]->getTopicName())){
@@ -169,7 +169,7 @@ Topic* Topics::getTopic(uint16_t id) {
 }
 
 
-uint16_t Topics::createTopic(UTFString* topic){
+uint16_t Topics::createTopic(string* topic){
     if (!getTopic(topic)){
         if ( _cnt < MAX_TOPIC_COUNT){
         	Topic* tp = new Topic();
@@ -193,7 +193,7 @@ uint16_t Topics::getNextTopicId(){
 	return _nextTopicId;
 }
 
-Topic* Topics::match(UTFString* topic){
+Topic* Topics::match(string* topic){
 	uint8_t pos;
 
     for ( uint8_t i = 0; i< _cnt; i++){

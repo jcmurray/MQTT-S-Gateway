@@ -91,6 +91,10 @@ void setLong(uint8_t* pos, uint32_t val){
     *pos   =  val & 0xff;
 }
 
+void utfSerialize(uint8_t* pos, string str){
+	setUint16(pos, (uint16_t)str.size());
+	str.copy((char*)pos + 2, str.size(), 0);
+}
 
 char theCurrentTime[20];
 

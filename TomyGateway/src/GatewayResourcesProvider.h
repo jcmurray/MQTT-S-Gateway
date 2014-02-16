@@ -109,13 +109,13 @@ public:
 	Socket* getSocket();
 	XBeeAddress64* getAddress64Ptr();
 	uint16_t  getAddress16();
-	UTFString* getNodeId();
+	string* getNodeId();
 	void setMsb(uint32_t);
 	void setLsb(uint32_t);
 	void setAddress16(uint16_t addr);
 	void setAddress64(XBeeAddress64* addr);
 	void setTopics(Topics* topics);
-	void setNodeId(UTFString* id);
+	void setNodeId(string* id);
 
 
 
@@ -142,7 +142,7 @@ private:
     XBeeAddress64 _address64;
     uint16_t _address16;
 	Socket _socket;
-    UTFString _nodeId;
+    string _nodeId;
 };
 
 /*=====================================
