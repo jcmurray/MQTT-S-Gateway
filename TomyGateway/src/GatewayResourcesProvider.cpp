@@ -38,6 +38,7 @@
 using namespace std;
 
 extern Process* theProcess;
+extern char* currentDateTime();
 
 GatewayResourcesProvider* theGatewayResources = NULL;
 
@@ -47,10 +48,11 @@ GatewayResourcesProvider* theGatewayResources = NULL;
 GatewayResourcesProvider::GatewayResourcesProvider(): MultiTaskProcess(){
 	theMultiTask = this;
 	theProcess = this;
+	D_MQTT("%s TomyGateway start\n", currentDateTime());
 }
 
 GatewayResourcesProvider::~GatewayResourcesProvider(){
-
+	D_MQTT("%s TomyGateway stop\n", currentDateTime());
 }
 
 EventQue<Event>* GatewayResourcesProvider::getGatewayEventQue(){

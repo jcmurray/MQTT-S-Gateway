@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+extern char* currentDateTime();
 
 BrokerRecvTask::BrokerRecvTask(GatewayResourcesProvider* res){
 	_res = res;
@@ -127,7 +128,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTPubAck* puback = new MQTTPubAck();
 			puback->deserialize(packet);
 			puback->serialize(sbuff);
-			D_MQTT("     PUBACK       <<<<    Broker    %s\n", msgPrint(sbuff, puback));
+			D_MQTT("%s PUBACK       <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, puback));
 
 			clnode->setBrokerRecvMessage(puback);
 
@@ -135,7 +136,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTPublish* publish = new MQTTPublish();
 			publish->deserialize(packet);
 			publish->serialize(sbuff);
-			D_MQTT("\n     PUBLISH      <<<<    Broker    %s\n", msgPrint(sbuff, publish));
+			D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, publish));
 
 			clnode->setBrokerRecvMessage(publish);
 
@@ -143,7 +144,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTSubAck* suback = new MQTTSubAck();
 			suback->deserialize(packet);
 			suback->serialize(sbuff);
-			D_MQTT("     SUBACK       <<<<    Broker    %s\n", msgPrint(sbuff, suback));
+			D_MQTT("%s SUBACK       <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, suback));
 
 			clnode->setBrokerRecvMessage(suback);
 
@@ -151,7 +152,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTPingResp* pingresp = new MQTTPingResp();
 			pingresp->deserialize(packet);
 			pingresp->serialize(sbuff);
-			D_MQTT("     PINGRESP     <<<<    Broker    %s\n", msgPrint(sbuff, pingresp));
+			D_MQTT("%s PINGRESP     <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, pingresp));
 
 			clnode->setBrokerRecvMessage(pingresp);
 
@@ -159,7 +160,7 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTUnsubAck* unsuback = new MQTTUnsubAck();
 			unsuback->deserialize(packet);
 			unsuback->serialize(sbuff);
-			D_MQTT("     UNSUBACK     <<<<    Broker    %s\n", msgPrint(sbuff, unsuback));
+			D_MQTT("%s UNSUBACK     <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, unsuback));
 
 			clnode->setBrokerRecvMessage(unsuback);
 
@@ -167,12 +168,12 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 			MQTTConnAck* connack = new MQTTConnAck();
 			connack->deserialize(packet);
 			connack->serialize(sbuff);
-			D_MQTT("     CONNACK      <<<<    Broker    %s\n", msgPrint(sbuff, connack));
+			D_MQTT("%s CONNACK      <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, connack));
 
 			clnode->setBrokerRecvMessage(connack);
 
 		}else{
-			D_MQTT("     UNKOWN_TYPE  packetLength=%d\n",recvLength);
+			D_MQTT("%s UNKOWN_TYPE  packetLength=%d\n",currentDateTime(), recvLength);
 			return;
 		}
 
@@ -192,12 +193,12 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 char*  BrokerRecvTask::msgPrint(uint8_t* buffer, MQTTMessage* msg){
 	char* buf = _printBuf;
 
-	sprintf(buf, " 0x%02X", *buffer);
-	buf += 5;
+	sprintf(buf, " %02X", *buffer);
+	buf += 3;
 
 	for(int i = 0; i < msg->getRemainLength(); i++){
-		sprintf(buf, " 0x%02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
-		buf += 5;
+		sprintf(buf, " %02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
+		buf += 3;
 	}
 	*buf = 0;
 	return _printBuf;

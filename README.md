@@ -60,5 +60,7 @@ XBee configurations
 
 * Author:    Tomoaki YAMAGUCHI
 * Email:     tomoaki@tomy-tech.com
-* Twitter:   @ty4tw
+* Twitter:   [@ty4tw]
+
+[@ty4tw]:     http://twitter.com/ty4tw
 

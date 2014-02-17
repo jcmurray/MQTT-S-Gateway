@@ -96,13 +96,13 @@ void utfSerialize(uint8_t* pos, string str){
 	str.copy((char*)pos + 2, str.size(), 0);
 }
 
-char theCurrentTime[20];
+char theCurrentTime[32];
 
 char* currentDateTime() {
     time_t     now = time(0);
     struct tm  tstruct;
     tstruct = *localtime(&now);
-    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y-%m-%d %X", &tstruct);
+    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y-%m-%d %H:%M:%S   ", &tstruct);
     return theCurrentTime;
 }
 
