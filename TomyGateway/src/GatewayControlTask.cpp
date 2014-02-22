@@ -42,6 +42,7 @@
 #include <time.h>
 
 extern char* currentDateTime();
+extern uint16_t getUint16(uint8_t* pos);
 
 /*=====================================
         Class GatewayControlTask
@@ -200,9 +201,13 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 
 	Topic* tp = clnode->getTopics()->getTopic(sPublish->getTopicId());
 
-	if(tp){
-		mqMsg->setTopic(tp->getTopicName());
-
+	if(tp || ((sPublish->getFlags() && MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_SHORT)){
+		if(tp){
+			mqMsg->setTopic(tp->getTopicName());
+		}else{
+			string str;
+			mqMsg->setTopic(sPublish->getTopic(&str));
+		}
 		if(sPublish->getMsgId()){
 			MQTTSnPubAck* sPuback = new MQTTSnPubAck();
 			sPuback->setMsgId(sPublish->getMsgId());
@@ -273,71 +278,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 	subscribe->setQos(sSubscribe->getQos());
 
 	if(topicIdType != MQTTSN_FLAG_TOPICID_TYPE_RESV){
-		/*----- TopicName ------*/
-		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_SHORT){
-			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
-
-			uint16_t tpId;
-			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicName());
-
-			if (tp){
-				tpId = tp->getTopicId();
-			}else{
-				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName());
-			}
-
-			if(sSubscribe->getMsgId()){
-				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-				sSuback->setMsgId(sSubscribe->getMsgId());
-				sSuback->setTopicId(tpId);
-				clnode->setWaitedSubAck(sSuback);
-			}
-
-			clnode->setBrokerSendMessage(subscribe);
-			Event* ev1 = new Event();
-			ev1->setBrokerSendEvent(clnode);
-			_res->getBrokerSendQue()->post(ev1);
-		}
-		/*----- TopicId ------*/
-		else if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_NORMAL){
-
-			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicId());
-
-			if(tp){
-				subscribe->setTopic(tp->getTopicName(), sSubscribe->getQos());
-
-				if(sSubscribe->getMsgId()){
-					MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-					sSuback->setMsgId(sSubscribe->getMsgId());
-					sSuback->setTopicId(tp->getTopicId());
-					if(clnode->getWaitedSubAck()){
-						delete clnode->getWaitedSubAck();
-					}
-					clnode->setWaitedSubAck(sSuback);
-					clnode->setBrokerSendMessage(subscribe);
-				}
-
-				Event* ev1 = new Event();
-				ev1->setBrokerSendEvent(clnode);
-				_res->getBrokerSendQue()->post(ev1);       // Send MQTTSubscribe
-
-			}else{
-				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-				sSuback->setMsgId(sSubscribe->getMsgId());
-				sSuback->setReturnCode(MQTTSN_RC_REJECTED_INVALID_TOPIC_ID);
-				clnode->setClientSendMessage(sSuback);
-
-				Event* evregack = new Event();
-				evregack->setClientSendEvent(clnode);
-				D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
-				_res->getClientSendQue()->post(evregack);  // Send SubAck Response
-
-				delete sSubscribe;
-				delete subscribe;
-				return;
-			}
-
-		}else{
+		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_PREDEFINED){
 			/*----- Predefined TopicId ------*/
 			MQTTSnSubAck* sSuback = new MQTTSnSubAck();
 
@@ -378,9 +319,42 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 				_res->getClientSendQue()->post(evpub);
 			}
 			delete subscribe;
+		}else{
+			uint16_t tpId;
+
+			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicName());
+			if (tp){
+				tpId = tp->getTopicId();
+			}else{
+				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName());
+			}
+
+			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
+			if(sSubscribe->getMsgId()){
+				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
+				sSuback->setMsgId(sSubscribe->getMsgId());
+				sSuback->setTopicId(tpId);
+				clnode->setWaitedSubAck(sSuback);
+			}
+
+			clnode->setBrokerSendMessage(subscribe);
+			Event* ev1 = new Event();
+			ev1->setBrokerSendEvent(clnode);
+			_res->getBrokerSendQue()->post(ev1);
+/*
+			MQTTSnSubAck* sSuback = new MQTTSnSubAck();
+			sSuback->setMsgId(sSubscribe->getMsgId());
+			sSuback->setReturnCode(MQTTSN_RC_REJECTED_INVALID_TOPIC_ID);
+			clnode->setClientSendMessage(sSuback);
+
+			Event* evregack = new Event();
+			evregack->setClientSendEvent(clnode);
+			D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
+			_res->getClientSendQue()->post(evregack);  // Send SubAck Response
+*/
+			delete sSubscribe;
+			return;
 		}
-		delete sSubscribe;
-		return;
 
 	}else{
 		/*-- Irregular TopicIdType --*/
@@ -397,9 +371,9 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 			D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
 			_res->getClientSendQue()->post(evun);  // Send SUBACK to Client
 		}
+		delete subscribe;
+		delete sSubscribe;
 	}
-	delete subscribe;
-	delete sSubscribe;
 }
 
 /*-------------------------------------------------------
@@ -769,8 +743,13 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 	string* tp = mqMsg->getTopic();
 	uint16_t tpId;
 
-	tpId = clnode->getTopics()->getTopicId(tp);
-
+	if(tp->size() == 2){
+		tpId = getUint16((uint8_t*)tp);
+		snMsg->setFlags(MQTTSN_TOPIC_TYPE_SHORT);
+	}else{
+		tpId = clnode->getTopics()->getTopicId(tp);
+		snMsg->setFlags(MQTTSN_TOPIC_TYPE_NORMAL);
+	}
 	if(tpId == 0){
 		/* ----- may be a publish message response of subscribed with '#' or '+' -----*/
 		tpId = clnode->getTopics()->createTopic(tp);

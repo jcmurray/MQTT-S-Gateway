@@ -102,7 +102,7 @@ char* currentDateTime() {
     time_t     now = time(0);
     struct tm  tstruct;
     tstruct = *localtime(&now);
-    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y-%m-%d %H:%M:%S   ", &tstruct);
+    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y%m%d %H%M%S   ", &tstruct);
     return theCurrentTime;
 }
 

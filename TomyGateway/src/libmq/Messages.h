@@ -388,7 +388,9 @@ public:
     void setFlags(uint8_t flags);
     uint8_t getFlags();
     void setTopicId(uint16_t id);
+    void setTopic(string* topic);
     uint16_t getTopicId();
+    string*  getTopic(string* str);
     uint8_t  getTopicType();
     uint8_t  getQos();
 	void     setQos(uint8_t);

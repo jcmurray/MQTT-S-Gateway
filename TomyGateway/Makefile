@@ -13,7 +13,7 @@ $(SUBDIR)/ProcessFramework.cpp \
 $(SUBDIR)/Messages.cpp \
 $(SUBDIR)/Socket.cpp \
 $(SUBDIR)/Topics.cpp \
-$(SUBDIR)/ZBeeStack.cpp 
+$(SUBDIR)/ZBStack.cpp 
 
 CXX := g++
 CPPFLAGS += 

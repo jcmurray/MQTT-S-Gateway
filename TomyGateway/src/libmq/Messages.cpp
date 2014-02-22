@@ -596,9 +596,24 @@ void MQTTSnPublish::setTopicId(uint16_t id){
     _topicId = id;
 }
 
+void MQTTSnPublish::setTopic(string* topic){
+   topic->copy((char*)(getBodyPtr() + 1), 2);
+   _topicId = getUint16((uint8_t*)(getBodyPtr() + 1));
+}
+
+string* MQTTSnPublish::getTopic(string* str){
+	char tp[3];
+	tp[0] = (char)*(getBodyPtr() + 1);
+	tp[1] = (char)*(getBodyPtr() + 2);
+	tp[2] = 0;
+	str->copy(tp,2);
+	return str;
+}
+
 uint16_t MQTTSnPublish::getTopicId(){
     return _topicId;
 }
+
 void MQTTSnPublish::setMsgId(uint16_t msgId){
     setUint16((uint8_t*)(getBodyPtr() + 3), msgId);
     _msgId = msgId;
@@ -795,14 +810,13 @@ void MQTTSnSubscribe::absorb(XBResponse* src){
 void MQTTSnSubscribe::absorb(MQTTSnMessage* src){
 	_msgId = getUint16((uint8_t*)(src->getBodyPtr() +1));
 	_flags = src->getBodyPtr()[0];
-	if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_SHORT ){
+	if((_flags & MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_SHORT ){
 		_topicName = string((char*)src->getBodyPtr() + 3, src->getMessageLength() - 5);
-	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_PREDEFINED){
+	}else if((_flags & MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_NORMAL){
+		_topicName = string((char*)src->getBodyPtr() + 3, src->getMessageLength() - 5);
+	}else if((_flags & MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_PREDEFINED){
 		 _topicId = getUint16(getBodyPtr() +3);
-	}else if((_flags & 0x03) == MQTTSN_TOPIC_TYPE_NORMAL){
-		_topicId = getUint16(getBodyPtr() +3);
 	}
-
 	MQTTSnMessage::absorb(src);
 }
 /*=====================================
@@ -1571,7 +1585,7 @@ bool MQTTPublish::deserialize(uint8_t* buf){
 	_messageId = getUint16(buf);
 
 	buf += 2;
-	_len = _remainLength - _topic.size() - 2;
+	_len = _remainLength - _topic.size() - 4;
 	_payload = mqcalloc(_len);
 	memcpy(_payload, buf, _len);
 	return true;

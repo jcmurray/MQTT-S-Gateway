@@ -35,6 +35,8 @@
 #include "Messages.h"
 #include <string>
 
+extern uint16_t getUint16(uint8_t* pos);
+
 /*=====================================
         Class Topic
  ======================================*/
@@ -173,8 +175,13 @@ uint16_t Topics::createTopic(string* topic){
     if (!getTopic(topic)){
         if ( _cnt < MAX_TOPIC_COUNT){
         	Topic* tp = new Topic();
-        	tp->setTopicId(getNextTopicId());
         	tp->setTopicName(*topic);
+        	if(tp->getTopicLength() == 2){
+        		uint16_t id = getUint16((uint8_t*)tp->getTopicName());
+        		tp->setTopicId(id);
+        	}else{
+        		tp->setTopicId(getNextTopicId());
+        	}
         	_topics.push_back(tp);
         	_cnt++;
         	return _nextTopicId;
