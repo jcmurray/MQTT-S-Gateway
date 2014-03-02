@@ -53,11 +53,13 @@
 #define BROKER_HOST_NAME  "localhost"
 #define BROKER_PORT       1883
 
-#define KEEP_ALIVE_TIME   900000    // 900000 msec = 15 min
+#define KEEP_ALIVE_TIME   120    // 120 sec = 2 min
 
-#define TIMEOUT_PERIOD     10000    //  10000 msec = 10 sec
+//#define KEEP_ALIVE_TIME   900    // 900 sec = 15 min
 
-#define SEND_UNIXTIME_PERIOD  360000   // 360000 msec = 1 hour
+#define TIMEOUT_PERIOD     10    //  10 sec = 10 sec
+
+#define SEND_UNIXTIME_PERIOD  3600   // 3600 sec = 1 hour
 
 
 

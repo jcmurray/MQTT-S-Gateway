@@ -48,7 +48,6 @@ GatewayResourcesProvider* theGatewayResources = NULL;
 GatewayResourcesProvider::GatewayResourcesProvider(): MultiTaskProcess(){
 	theMultiTask = this;
 	theProcess = this;
-	D_MQTT("%s TomyGateway start\n", currentDateTime());
 }
 
 GatewayResourcesProvider::~GatewayResourcesProvider(){

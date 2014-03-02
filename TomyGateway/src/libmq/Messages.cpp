@@ -268,7 +268,7 @@ void MQTTSnConnect::setClientId(string id){
 }
 
 string* MQTTSnConnect::getClientId(){
-	_clientId = string((char*)(getBodyPtr() + 4), getMessageLength() -4 );
+	_clientId = string((char*)(getBodyPtr() + 4), getMessageLength() - 6 );
     return &_clientId;
 }
 

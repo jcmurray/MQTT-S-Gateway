@@ -153,8 +153,6 @@
 #define MQTTSN_ERR_ACK_TIMEOUT       -10
 #define MQTTSN_ERR_PINGRESP_TIMEOUT  -11
 
-#define MQTTS_TOPICID_PREDEFINED_TIME  0x0001
-#define MQTTS_TOPIC_PREDEFINED_TIME ("PDEF/01")
 
 #include "ZBStack.h"
 #include "ProcessFramework.h"
