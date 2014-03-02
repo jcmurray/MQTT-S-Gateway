@@ -63,21 +63,10 @@ void GatewayControlTask::run(){
 
 	_eventQue = _res->getGatewayEventQue();
 
-	MQTTSnPublish* msg = new MQTTSnPublish();
-
-	msg->setTopicId(MQTTSN_TOPICID_PREDEFINED_START);  //broadcast the gateway rebooted
-	msg->setQos(0);
-	msg->setTopicIdType(MQTTSN_TOPIC_TYPE_PREDEFINED);
-
-	ev = new Event();
-	ev->setEvent(msg);  // broadcast
-	D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(msg));
-	_res->getClientSendQue()->post(ev);
-
 	advertiseTimer.start(KEEP_ALIVE_TIME * 1000);
 	sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000);
 
-	//	D_MQTT("%s TomyGateway start\n", currentDateTime());
+		D_MQTT("%s TomyGateway start\n", currentDateTime());
 
 	while(true){
 
@@ -301,9 +290,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 				sSuback->setTopicId(sSubscribe->getTopicId());
 				sSuback->setMsgId(sSubscribe->getMsgId());
 
-				if(sSubscribe->getTopicId() == MQTTSN_TOPICID_PREDEFINED_START){
-					sSuback->setReturnCode(MQTT_RC_ACCEPTED);
-				}else if(sSubscribe->getTopicId() == MQTTSN_TOPICID_PREDEFINED_TIME){
+				if(sSubscribe->getTopicId() == MQTTSN_TOPICID_PREDEFINED_TIME){
 					sSuback->setReturnCode(MQTT_RC_ACCEPTED);
 				}else{
 					sSuback->setReturnCode(MQTT_RC_REFUSED_IDENTIFIER_REJECTED);

@@ -123,13 +123,10 @@ bool Topic::isMatch(Topic* topic){
         Class Topics
  ======================================*/
 Topics::Topics(){
-	Topic* tp = new Topic(string(MQTTSN_TOPIC_PREDEFINED_START));
-	tp->setTopicId(MQTTSN_TOPICID_PREDEFINED_START);
-	_topics.push_back(tp);
-	tp = new Topic(string(MQTTSN_TOPIC_PREDEFINED_TIME));
+	Topic* tp = new Topic(string(MQTTSN_TOPIC_PREDEFINED_TIME));
 	tp->setTopicId(MQTTSN_TOPICID_PREDEFINED_TIME);
 	_topics.push_back(tp);
-	_cnt = 2;
+	_cnt = 1;
 	_nextTopicId = MQTTSN_TOPICID_NORMAL;
 }
 
