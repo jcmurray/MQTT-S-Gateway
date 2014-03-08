@@ -44,6 +44,8 @@
 #define ARGV_BROKER_ADDR 3
 #define ARGV_BROKER_PORT 4
 
+
+
 /*=====================================
         Class MessageQue
  =====================================*/
@@ -139,9 +141,10 @@ private:
 	uint16_t _keepAliveMsec;
 	Timer _keepAliveTimer;
 
-    XBeeAddress64 _address64;
     uint16_t _address16;
 	Socket _socket;
+
+	XBeeAddress64 _address64;
     string _nodeId;
 };
 
@@ -152,16 +155,17 @@ class ClientList{
 public:
 	ClientList();
 	~ClientList();
+	void authorize(const char* fileName);
 	void erase(ClientNode*);
-	ClientNode* getClient(uint16_t address16);
-	ClientNode* createNode(XBeeAddress64* addr64, uint16_t addr16);
+	ClientNode* getClient(XBeeAddress64* addr64);
+	ClientNode* createNode(XBeeAddress64* addr64, string* nodeId = NULL);
 	uint16_t getClientCount();
 	ClientNode* operator[](int);
 private:
 	vector<ClientNode*>*  _clientVector;
 	Mutex _mutex;
 	uint16_t _clientCnt;
-
+	bool _authorize;
 };
 
 /*=====================================

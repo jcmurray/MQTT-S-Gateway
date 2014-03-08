@@ -78,6 +78,13 @@ void XBeeAddress64::setLsb(uint32_t lsb){
   _lsb = lsb;
 }
 
+bool XBeeAddress64::operator==(XBeeAddress64& addr){
+	if(_msb == addr.getMsb() && _lsb == addr.getLsb()){
+		return true;
+	}else{
+		return false;
+	}
+}
 /*=========================================
              Class XBResponse
  =========================================*/

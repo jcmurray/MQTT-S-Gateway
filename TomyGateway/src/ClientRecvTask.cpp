@@ -32,6 +32,7 @@
  */
 #include "ClientRecvTask.h"
 #include "GatewayResourcesProvider.h"
+#include "GatewayDefines.h"
 #include "libmq/ProcessFramework.h"
 #include "libmq/Messages.h"
 #include "libmq/ZBStack.h"
@@ -69,20 +70,23 @@ void ClientRecvTask::run(){
 
 		if(_zb.getResponse(resp)){
 
-			ClientNode* clnode = _res->getClientList()->getClient(resp->getRemoteAddress16());
+			ClientNode* clnode = _res->getClientList()->getClient(resp->getRemoteAddress64());
 
 			if(!clnode){
 				if(resp->getPayloadPtr()[1] == MQTTSN_TYPE_CONNECT){
-					ClientNode* node = _res->getClientList()->createNode(resp->getRemoteAddress64(),resp->getRemoteAddress16());
+					ClientNode* node = _res->getClientList()->createNode(resp->getRemoteAddress64());
 					if(!node){
 						delete ev;
-						THROW_EXCEPTION(ExWarn, ERRNO_SYS_04, "can't create a clientNode.");
+						D_MQTT("Client is not authorized.\n");
+						continue;
 					}
+
 					MQTTSnConnect* msg = new MQTTSnConnect();
 					msg->absorb(resp);
-					node->setAddress64(resp->getRemoteAddress64());
 					node->setAddress16(resp->getRemoteAddress16());
-					node->setNodeId(msg->getClientId());
+					if(msg->getClientId()->size() > 0){
+						node->setNodeId(msg->getClientId());
+					}
 					node->setClientRecvMessage(msg);
 
 					ev->setClientRecvEvent(node);
@@ -99,6 +103,7 @@ void ClientRecvTask::run(){
 					MQTTSnConnect* msg = new MQTTSnConnect();
 					msg->absorb(resp);
 					clnode->setClientRecvMessage(msg);
+					clnode->setAddress16(resp->getRemoteAddress16());
 					ev->setClientRecvEvent(clnode);
 
 				}else if(resp->getPayloadPtr()[1] == MQTTSN_TYPE_PUBLISH){
