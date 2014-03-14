@@ -41,7 +41,6 @@
 #include <string.h>
 #include <time.h>
 
-#define FILE_NAME_CLIENT_LIST "/tmp/clientList"
 
 extern char* currentDateTime();
 extern uint16_t getUint16(uint8_t* pos);
@@ -63,7 +62,6 @@ void GatewayControlTask::run(){
 	Timer sendUnixTimer;
 	Event* ev = NULL;
 
-	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 	_eventQue = _res->getGatewayEventQue();
 
 	advertiseTimer.start(KEEP_ALIVE_TIME * 1000);

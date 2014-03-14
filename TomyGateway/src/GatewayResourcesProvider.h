@@ -45,7 +45,7 @@
 #define ARGV_BROKER_PORT 4
 
 
-
+#define FILE_NAME_CLIENT_LIST "config/clientList.conf"
 /*=====================================
         Class MessageQue
  =====================================*/

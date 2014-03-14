@@ -61,6 +61,7 @@ void ClientRecvTask::run(){
 	_zb.setSerialPort(&_sp);
 
 	XBResponse* resp = new XBResponse();
+	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 
 	while(true){
 
