@@ -178,7 +178,6 @@ public:
     uint8_t getBodyLength();
     bool getMessage(uint8_t pos, uint8_t& val);
     uint8_t* getMessagePtr();
-    void reset();
 
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);

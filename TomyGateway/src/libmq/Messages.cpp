@@ -61,14 +61,8 @@ MQTTSnMessage::MQTTSnMessage(){
 
 MQTTSnMessage::~MQTTSnMessage(){
     if (_message){
-        delete _message;
+        free(_message);
     }
-}
-
-void MQTTSnMessage::reset(){
-	_message = NULL;
-    _length = 0;
-    _type = 0;
 }
 
 void MQTTSnMessage::setType(uint8_t type){
@@ -88,7 +82,7 @@ void MQTTSnMessage::setBody(uint8_t* body, uint8_t bodyLength){
 void MQTTSnMessage::allocate(){
 		if ( _length ) {
 			if (_message){
-				  delete _message;
+				  free(_message);
 			}
 			_message = mqcalloc(_length);
 			*_message = _length;
@@ -129,14 +123,14 @@ void MQTTSnMessage::absorb(MQTTSnMessage* src){
     setMessageLength(src->getMessageLength());
     setType(src->getType());
     allocate();
-    memcpy(_message + MQTTSN_HEADER_SIZE, src->getBodyPtr(), src->getBodyLength());
+    memcpy(_message + MQTTSN_HEADER_SIZE, src->getBodyPtr(), (size_t)src->getBodyLength());
 }
 
 void MQTTSnMessage::absorb(XBResponse* src){
 	setMessageLength(src->getPayloadLength());
 	setType(src->getPayloadPtr()[1]);
 	allocate();
-	memcpy(_message,src->getPayloadPtr(), src->getPayloadLength());
+	memcpy(_message,src->getPayloadPtr(), (size_t)src->getPayloadLength());
 }
 
 
@@ -278,7 +272,6 @@ void MQTTSnConnect::absorb(XBResponse* src){
 
 void MQTTSnConnect::absorb(MQTTSnMessage* src){
 	setMessageLength(src->getMessageLength());
-	//string id =  string(src->getBodyPtr() + 4);
 	setClientId(*getClientId());
 	setFlags(src->getBodyPtr()[0]);
 	setDuration(getUint16(src->getBodyPtr() + 2));

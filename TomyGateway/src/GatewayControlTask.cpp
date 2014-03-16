@@ -64,8 +64,8 @@ void GatewayControlTask::run(){
 
 	_eventQue = _res->getGatewayEventQue();
 
-	advertiseTimer.start(KEEP_ALIVE_TIME * 1000);
-	sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000);
+	advertiseTimer.start(KEEP_ALIVE_TIME * 1000UL);
+	sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000UL);
 
 		D_MQTT("%s TomyGateway start\n", currentDateTime());
 
@@ -94,7 +94,7 @@ void GatewayControlTask::run(){
 				ev->setEvent(adv);  //broadcast
 				D_MQTT("\n%s ADVERTISE    <---    Broker    %s\n", currentDateTime(), msgPrint(adv));
 				_res->getClientSendQue()->post(ev);
-				advertiseTimer.start(KEEP_ALIVE_TIME * 1000);
+				advertiseTimer.start(KEEP_ALIVE_TIME * 1000UL);
 			}
 
 			/*------ Check Timer & send UixTime ------*/
@@ -111,7 +111,7 @@ void GatewayControlTask::run(){
 				ev->setEvent(msg);
 				D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(msg));
 				_res->getClientSendQue()->post(ev);
-				sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000);
+				sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000UL);
 			}
 		}
 
