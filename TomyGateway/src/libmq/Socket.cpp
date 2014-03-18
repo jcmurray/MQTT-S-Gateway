@@ -50,7 +50,7 @@ Socket::Socket() :  _sock ( -1 ){
 }
 
 Socket::~Socket(){
-    disconnect();
+    //disconnect();
 }
 
 bool Socket::isValid(){

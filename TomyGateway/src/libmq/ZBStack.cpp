@@ -94,7 +94,7 @@ XBResponse::XBResponse(){
 
 XBResponse::~XBResponse(){
   if(_frameDataPtr){
-	  delete _frameDataPtr;
+	  free(_frameDataPtr);
   }
 }
 
@@ -349,9 +349,7 @@ XBee::XBee(){
 }
 
 XBee::~XBee(){
-	if(_serialPort != 0){
-		delete(_serialPort);
-	}
+
 }
 
 void XBee::readPacket(){

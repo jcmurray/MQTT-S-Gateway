@@ -64,13 +64,10 @@ void ClientRecvTask::run(){
 	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 
 	while(true){
-
-		Event* ev = new Event();
-
 		bool eventSetFlg = true;
 
 		if(_zb.getResponse(resp)){
-
+			Event* ev = new Event();
 			ClientNode* clnode = _res->getClientList()->getClient(resp->getRemoteAddress64());
 
 			if(!clnode){
