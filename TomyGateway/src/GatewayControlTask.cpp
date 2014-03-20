@@ -128,7 +128,7 @@ void GatewayControlTask::run(){
 				D_MQTT("%s GWINFO       --->    Client    %s\n", currentDateTime(), msgPrint(gwinfo));
 				_res->getClientSendQue()->post(ev1);
 			}
-			delete msg;
+
 		}
 		
 		/*------   Message form Clients      ---------*/
@@ -160,7 +160,7 @@ void GatewayControlTask::run(){
 			}else{
 				D_MQTT("%s   Irregular ClientRecvMessage\n", currentDateTime());
 			}
-			delete msg;
+
 		}
 		/*------   Message form Broker      ---------*/
 		else if(ev->getEventType() == EtBrokerRecv){

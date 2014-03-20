@@ -62,13 +62,13 @@ void ClientRecvTask::run(){
 
 	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 
-	Timer tm;
-	tm.start(120000);
+	//Timer tm;
+	//tm.start(120000);
 
 	while(true){
-		if(tm.isTimeup()){
-				THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");
-		}
+		//if(tm.isTimeup()){
+		//		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");
+		//}
 		XBResponse* resp = new XBResponse();
 		bool eventSetFlg = true;
 
