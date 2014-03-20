@@ -1057,10 +1057,13 @@ MQTTMessage::MQTTMessage(){
 	_flags = 0;
 	_messageId = 0;
 	_remainLength = 0;
+	_payload = NULL;
 }
 
 MQTTMessage::~MQTTMessage(){
-
+	if(_payload){
+		free(_payload);
+	}
 }
 
 uint8_t MQTTMessage::getType(){
@@ -1503,9 +1506,7 @@ MQTTPublish::MQTTPublish(){
 }
 
 MQTTPublish::~MQTTPublish(){
-	if(_payload){
-		delete _payload;
-	}
+
 }
 
 void MQTTPublish::setMessageId(uint16_t id){
@@ -1535,8 +1536,8 @@ void MQTTPublish::setTopic(string* topic){
 
 void MQTTPublish::setPayload(uint8_t* payload, uint8_t length){
 	if(_payload){
-		_remainLength -= length;
-		delete _payload;
+		_remainLength -= _len;
+		free(_payload);
 	}
 	_payload = mqcalloc(length);
 	memcpy(_payload, payload, length);

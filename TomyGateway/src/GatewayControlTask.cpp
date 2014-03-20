@@ -90,10 +90,10 @@ void GatewayControlTask::run(){
 				MQTTSnAdvertise* adv = new MQTTSnAdvertise();
 				adv->setGwId(atoi(_res->getArgv()[ARGV_GATEWAY_ID]));
 				adv->setDuration(KEEP_ALIVE_TIME);
-				Event* ev = new Event();
-				ev->setEvent(adv);  //broadcast
+				Event* ev1 = new Event();
+				ev1->setEvent(adv);  //broadcast
 				D_MQTT("\n%s ADVERTISE    <---    Broker    %s\n", currentDateTime(), msgPrint(adv));
-				_res->getClientSendQue()->post(ev);
+				_res->getClientSendQue()->post(ev1);
 				advertiseTimer.start(KEEP_ALIVE_TIME * 1000UL);
 			}
 
@@ -107,10 +107,10 @@ void GatewayControlTask::run(){
 				msg->setData((uint8_t*)&tm, sizeof(long int));
 				msg->setQos(0);
 
-				Event* ev = new Event();
-				ev->setEvent(msg);
+				Event* ev1 = new Event();
+				ev1->setEvent(msg);
 				D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(msg));
-				_res->getClientSendQue()->post(ev);
+				_res->getClientSendQue()->post(ev1);
 				sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000UL);
 			}
 		}
@@ -123,11 +123,12 @@ void GatewayControlTask::run(){
 			if(msg->getType() == MQTTSN_TYPE_SEARCHGW){
 				MQTTSnGwInfo* gwinfo = new MQTTSnGwInfo();
 				gwinfo->setGwId(atoi(_res->getArgv()[ARGV_GATEWAY_ID]));
-				Event* ev = new Event();
-				ev->setEvent(gwinfo);
+				Event* ev1 = new Event();
+				ev1->setEvent(gwinfo);
 				D_MQTT("%s GWINFO       --->    Client    %s\n", currentDateTime(), msgPrint(gwinfo));
-				_res->getClientSendQue()->post(ev);
+				_res->getClientSendQue()->post(ev1);
 			}
+			delete msg;
 		}
 		
 		/*------   Message form Clients      ---------*/
@@ -159,6 +160,7 @@ void GatewayControlTask::run(){
 			}else{
 				D_MQTT("%s   Irregular ClientRecvMessage\n", currentDateTime());
 			}
+			delete msg;
 		}
 		/*------   Message form Broker      ---------*/
 		else if(ev->getEventType() == EtBrokerRecv){
@@ -184,6 +186,7 @@ void GatewayControlTask::run(){
 				D_MQTT("%s   Irregular BrokerRecvMessage\n", currentDateTime());
 			}
 		}
+
 		delete ev;
 	}
 }
@@ -217,7 +220,7 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 			sPuback->setMsgId(sPublish->getMsgId());
 			sPuback->setTopicId(sPublish->getTopicId());
 			if(clnode->getWaitedPubAck()){
-				delete(clnode->getWaitedPubAck());
+				delete clnode->getWaitedPubAck();
 			}
 			clnode->setWaitedPubAck(sPuback);
 
@@ -487,7 +490,6 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
 	// ToDo: UserName & Password setting
 
 	clnode->setConnectMessage(mqMsg);
-	//clnode->setNodeId(sConnect->getClientId());
 
 	if(sConnect->isCleanSession()){
 		if(topics){
@@ -655,6 +657,7 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 void GatewayControlTask::handlePingresp(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
 	MQTTSnPingResp* snMsg = new MQTTSnPingResp();
+	//MQTTPingResp* mqMsg = static_cast<MQTTPingResp*>(msg);
 	D_MQTT("%s PINGRESP     --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
@@ -729,6 +732,7 @@ void GatewayControlTask::handleConnack(Event* ev, ClientNode* clnode, MQTTMessag
  -------------------------------------------------------*/
 void GatewayControlTask::handleDisconnect(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 	MQTTSnDisconnect* snMsg = new MQTTSnDisconnect();
+	//MQTTDisconnect* mqMsg = static_cast<MQTTDisconnect*>(msg);
 	clnode->setClientSendMessage(snMsg);
 	D_MQTT("%s DISCONNECT   --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	Event* ev1 = new Event();

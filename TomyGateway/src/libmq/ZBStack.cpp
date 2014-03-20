@@ -89,7 +89,13 @@ bool XBeeAddress64::operator==(XBeeAddress64& addr){
              Class XBResponse
  =========================================*/
 XBResponse::XBResponse(){
-  reset();
+	_frameDataPtr = 0;
+	_msbLength = 0;
+	_lsbLength = 0;
+	_checksum = 0;
+	_frameLength = 0;
+	_errorCode = NO_ERROR;
+	_complete = false;
 }
 
 XBResponse::~XBResponse(){
@@ -166,12 +172,15 @@ void XBResponse::setApiId(uint8_t apiId){
 }
 
 void XBResponse::reset(){
-  _msbLength = 0;
-  _lsbLength = 0;
-  _checksum = 0;
-  _frameLength = 0;
-  _errorCode = NO_ERROR;
-  _complete = false;
+	if(_frameDataPtr){
+		  free(_frameDataPtr);
+	}
+	_msbLength = 0;
+	_lsbLength = 0;
+	_checksum = 0;
+	_frameLength = 0;
+	_errorCode = NO_ERROR;
+_complete = false;
 }
 
 uint8_t XBResponse::getPayload(int index){
@@ -216,6 +225,9 @@ bool XBResponse::isBroadcast(){
 }
 
 void XBResponse::absorb(XBResponse* resp){
+	if(_frameDataPtr){
+		free(_frameDataPtr);
+	}
 	_apiId = resp->getApiId();
 	_msbLength = resp->getMsbLength();
 	_lsbLength = resp->getLsbLength();

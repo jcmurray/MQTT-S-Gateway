@@ -60,10 +60,16 @@ void ClientRecvTask::run(){
 	}
 	_zb.setSerialPort(&_sp);
 
-	XBResponse* resp = new XBResponse();
 	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 
+	Timer tm;
+	tm.start(120000);
+
 	while(true){
+		if(tm.isTimeup()){
+				THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");
+		}
+		XBResponse* resp = new XBResponse();
 		bool eventSetFlg = true;
 
 		if(_zb.getResponse(resp)){
@@ -184,8 +190,8 @@ void ClientRecvTask::run(){
 				delete ev;
 			}
 		}
+		delete resp;
 	}
-	delete resp;
 }
 
 

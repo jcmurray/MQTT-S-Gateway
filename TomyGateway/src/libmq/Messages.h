@@ -611,6 +611,7 @@ protected:
 	uint8_t _flags;
 	uint16_t _remainLength;
 	uint16_t _messageId;
+	uint8_t* _payload;
 };
 
 
@@ -770,7 +771,6 @@ public:
 
 private:
 	string _topic;
-	uint8_t* _payload;
 	uint8_t _len;
 };
 

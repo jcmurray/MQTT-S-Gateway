@@ -93,8 +93,16 @@ ClientNode::ClientNode(){
 }
 
 ClientNode::~ClientNode(){
-	_socket.disconnect();
 	delete _topics;
+	if(_mqttConnect){
+		delete _mqttConnect;
+	}
+	if(_waitedPubAck){
+		delete _waitedPubAck;
+	}
+	if(_waitedSubAck){
+		delete _waitedSubAck;
+	}
 }
 
 void ClientNode::setWaitedPubAck(MQTTSnPubAck* msg){
@@ -326,7 +334,7 @@ ClientList::~ClientList(){
 	_mutex.lock();
 	vector<ClientNode*>::iterator client = _clientVector->begin();
 	while((!_clientVector->empty()) && *client){
-		delete(*client);
+		delete *client;
 		_clientVector->erase(client);
 	}
 	_mutex.unlock();

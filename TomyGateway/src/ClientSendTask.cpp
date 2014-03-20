@@ -52,8 +52,6 @@ ClientSendTask::~ClientSendTask(){
 
 void ClientSendTask::run(){
 
-	MQTTSnMessage* msg = new MQTTSnMessage();
-
 	if(_sp.begin(_res->getArgv()[ARGV_DEVICE_NAME], B57600, O_WRONLY) == -1){
 		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");  // ABORT
 	}
@@ -61,7 +59,7 @@ void ClientSendTask::run(){
 	_zb.setSerialPort(&_sp);
 
 	while(true){
-
+		MQTTSnMessage* msg = new MQTTSnMessage();
 		Event* ev = _res->getClientSendQue()->wait();
 
 		if(ev->getEventType() == EtClientSend){
@@ -75,6 +73,7 @@ void ClientSendTask::run(){
 			msg->absorb( ev->getMqttSnMessage() );
 			_zb.broadcast(msg->getMessagePtr(), msg->getMessageLength());
 		}
+		delete msg;
 		delete ev;
 	}
 }

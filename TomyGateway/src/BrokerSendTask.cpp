@@ -91,37 +91,31 @@ void BrokerSendTask::run(){
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s PUBACK       --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s PINGREQ      --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s SUBSCRIBE    --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s UNSUBSCRIBE  --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s CONNECT      --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
 			D_MQTT("%s DISCONNECT   --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
-
 		}
 
 		int rc = 0;
@@ -151,7 +145,6 @@ void BrokerSendTask::run(){
 				}
 			}
 		}
-
 		delete ev;
 	}
 }
