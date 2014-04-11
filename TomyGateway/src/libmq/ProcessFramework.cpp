@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/25
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 1.0.0
+ *     Version: 2.0.0
  *
  */
 

@@ -26,8 +26,9 @@
  * 
  * 
  *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 1.0.0
+ *     Version: 2.0.0
  *
  */
 
@@ -1058,6 +1059,12 @@ MQTTMessage::MQTTMessage(){
 	_messageId = 0;
 	_remainLength = 0;
 	_payload = NULL;
+	_userName = string("");
+	_password = string("");
+	_willTopic = string("");
+	_willMessage = string("");
+	_clientId = string("");
+	_topic = string("");
 }
 
 MQTTMessage::~MQTTMessage(){
@@ -1392,11 +1399,11 @@ MQTTConnect::MQTTConnect() : MQTTMessage(){
 	_type = MQTT_TYPE_CONNECT;
 	_connectFlags = 0;;
 	_keepAliveTime = 0;
-	_userName = string("");
-	_password = string("");
-	_willTopic = string("");
-	_willMessage = string("");
-	_clientId = string("");
+	//_userName = string("");
+	//_password = string("");
+	//_willTopic = string("");
+	//_willMessage = string("");
+	//_clientId = string("");
 }
 
 MQTTConnect::~MQTTConnect(){
@@ -1500,8 +1507,8 @@ uint16_t MQTTConnect::serialize(uint8_t* buf){
   ======================================*/
 MQTTPublish::MQTTPublish(){
 	_type = MQTT_TYPE_PUBLISH;
-	_topic = string("");
-	_payload = NULL;
+	//_topic = string("");
+	//_payload = NULL;
 	_len = 0;
 }
 

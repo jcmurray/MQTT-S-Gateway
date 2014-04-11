@@ -26,8 +26,9 @@
  * 
  * 
  *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -611,7 +612,18 @@ protected:
 	uint8_t _flags;
 	uint16_t _remainLength;
 	uint16_t _messageId;
+
 	uint8_t* _payload;
+
+	string _userName;
+	string _password;
+	string _willTopic;
+	string _willMessage;
+	string _clientId;
+
+	string _topic;
+
+
 };
 
 
@@ -707,7 +719,7 @@ public:
 	uint16_t serialize(uint8_t* buf);
 	void setTopicName(string*);
 private:
-	string _topic;
+	//string _topic;
 };
 
 /*=====================================
@@ -722,7 +734,7 @@ public:
 	uint16_t serialize(uint8_t* buf);
 	void setTopic(string* topic, uint8_t qos);
 private:
-	string _topic;
+	//string _topic;
 	uint8_t _qos;
 };
 
@@ -745,11 +757,11 @@ public:
 private:
 	uint8_t _connectFlags;
 	uint16_t _keepAliveTime;
-	string _userName;
-	string _password;
-	string _willTopic;
-	string _willMessage;
-	string _clientId;
+	//string _userName;
+	//string _password;
+	//string _willTopic;
+	//string _willMessage;
+	//string _clientId;
 };
 
 /*=====================================
@@ -770,7 +782,7 @@ public:
 	bool deserialize(uint8_t* buf);
 
 private:
-	string _topic;
+	//string _topic;
 	uint8_t _len;
 };
 

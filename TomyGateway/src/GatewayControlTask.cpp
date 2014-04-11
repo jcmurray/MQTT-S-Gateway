@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/11/02
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 1.0.0
+ *     Version: 2.0.0
  *
  */
 
@@ -348,17 +349,6 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 			Event* ev1 = new Event();
 			ev1->setBrokerSendEvent(clnode);
 			_res->getBrokerSendQue()->post(ev1);
-/*
-			MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-			sSuback->setMsgId(sSubscribe->getMsgId());
-			sSuback->setReturnCode(MQTTSN_RC_REJECTED_INVALID_TOPIC_ID);
-			clnode->setClientSendMessage(sSuback);
-
-			Event* evregack = new Event();
-			evregack->setClientSendEvent(clnode);
-			D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
-			_res->getClientSendQue()->post(evregack);  // Send SubAck Response
-*/
 			delete sSubscribe;
 			return;
 		}
@@ -379,8 +369,8 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 			_res->getClientSendQue()->post(evun);  // Send SUBACK to Client
 		}
 		delete subscribe;
-		delete sSubscribe;
 	}
+	delete sSubscribe;
 }
 
 /*-------------------------------------------------------
@@ -488,7 +478,6 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
 	mqMsg->setKeepAliveTime(sConnect->getDuration());
 
 	// ToDo: UserName & Password setting
-
 	clnode->setConnectMessage(mqMsg);
 
 	if(sConnect->isCleanSession()){

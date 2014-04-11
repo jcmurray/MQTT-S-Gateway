@@ -51,7 +51,33 @@ XBee configurations
 
   Other values are defaults.
   
-  
+RaspberryPi instalation
+----------------------
+####1)  Prepare Bootup SD card  
+*  Download img.zip file from    
+   
+*  Unzip archilinux-mqtt-sn-gateway4RaspberryPi.img.zip  
+*  Copy img file to SD card (4GB)  
+
+####2)  How to connect XBee to RaspberryPi
+        RaspberryPi           XBee   
+        3.3V  Pin 1  ----------  Pin 1  Vcc   
+        GND   Pin 6  ----------  Pin 10 GND    
+        Tx    Pin 8  ----------  Pin 3  Rx    
+        Rx    Pin 10 ----------  Pin 2  Tx    
+
+####3)  How to start 
+
+*  Boot up RaspberyPi & login via ssh.  
+    $ ssh 'RaspberryPi IP Address' -p 22022 -l gw  
+      	password is gw.  
+      	Raspberry IP address is asigned by DHCP.  
+*  Change gw password. (gw can use sudo command) 
+      	root's password is root.
+*  Invoke Gateway 
+    [gw@MQTT-SnGateway01~]$ ./TomyGateway 1 /dev/ttyAMA0 85.119.83.194 1883
+    	IP address 85.119.83.194 is test.mosquito.org.
+
   
   
   

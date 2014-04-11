@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/13
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 1.0.0
+ *     Version: 2.0.0
  *
  */
 #include "ClientSendTask.h"
@@ -59,21 +60,21 @@ void ClientSendTask::run(){
 	_zb.setSerialPort(&_sp);
 
 	while(true){
-		MQTTSnMessage* msg = new MQTTSnMessage();
 		Event* ev = _res->getClientSendQue()->wait();
 
 		if(ev->getEventType() == EtClientSend){
+			MQTTSnMessage msg = MQTTSnMessage();
 			ClientNode* clnode = ev->getClientNode();
-			msg->absorb( clnode->getClientSendMessage() );
+			msg.absorb( clnode->getClientSendMessage() );
 
 			_zb.unicast(clnode->getAddress64Ptr(), clnode->getAddress16(),
-					msg->getMessagePtr(), msg->getMessageLength());
+					msg.getMessagePtr(), msg.getMessageLength());
 
 		}else if(ev->getEventType() == EtBroadcast){
-			msg->absorb( ev->getMqttSnMessage() );
-			_zb.broadcast(msg->getMessagePtr(), msg->getMessageLength());
+			MQTTSnMessage msg = MQTTSnMessage();
+			msg.absorb( ev->getMqttSnMessage() );
+			_zb.broadcast(msg.getMessagePtr(), msg.getMessageLength());
 		}
-		delete msg;
 		delete ev;
 	}
 }

@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/13
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 1.0.0
+ *     Version: 2.0.0
  *
  */
 #include "ClientRecvTask.h"
@@ -62,13 +63,8 @@ void ClientRecvTask::run(){
 
 	_res->getClientList()->authorize(FILE_NAME_CLIENT_LIST);
 
-	//Timer tm;
-	//tm.start(120000);
-
 	while(true){
-		//if(tm.isTimeup()){
-		//		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");
-		//}
+
 		XBResponse* resp = new XBResponse();
 		bool eventSetFlg = true;
 
