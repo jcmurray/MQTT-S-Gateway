@@ -52,6 +52,7 @@ extern uint16_t getUint16(uint8_t* pos);
 GatewayControlTask::GatewayControlTask(GatewayResourcesProvider* res){
 	_res = res;
 	_res->attach(this);
+	_eventQue = 0;
 }
 
 GatewayControlTask::~GatewayControlTask(){
@@ -474,7 +475,7 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
 	MQTTConnect* mqMsg = new MQTTConnect();
 	sConnect->absorb(msg);
 
-	mqMsg->setClientId(sConnect->getClientId());
+	mqMsg->setClientId(clnode->getNodeId());
 	mqMsg->setKeepAliveTime(sConnect->getDuration());
 
 	// ToDo: UserName & Password setting

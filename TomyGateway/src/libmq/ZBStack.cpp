@@ -97,6 +97,7 @@ XBResponse::XBResponse(){
 	_frameLength = 0;
 	_errorCode = NO_ERROR;
 	_complete = false;
+	_apiId = 0;
 }
 
 XBResponse::~XBResponse(){
@@ -248,6 +249,11 @@ void XBResponse::absorb(XBResponse* resp){
 
 XBRequest::XBRequest(){
 	_apiId = 0x10;
+	_addr16 = 0;
+	_broadcastRadius = 0;
+	_option = 0;
+	_payloadPtr = 0;
+	_payloadLength = 0;
 }
 
 
@@ -359,6 +365,7 @@ XBee::XBee(){
 	_checksumTotal = 0;
 	_response.setFrameData(mqcalloc(MAX_FRAME_DATA_SIZE));
 	_serialPort = 0;
+	_bd = 0;
 }
 
 XBee::~XBee(){

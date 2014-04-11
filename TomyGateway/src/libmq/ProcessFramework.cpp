@@ -112,6 +112,8 @@ char* currentDateTime() {
   ======================================*/
 MultiTaskProcess::MultiTaskProcess(){
 	theMultiTask = this;
+	_argc = 0;
+	_argv = 0;
 }
 
 MultiTaskProcess::~MultiTaskProcess(){
@@ -166,6 +168,10 @@ char** MultiTaskProcess::getArgv(){
  =====================================*/
 Thread::Thread(){
 	_stopProcessEvent = theMultiTask->getStopProcessEvent();
+	_threadID = 0;
+	_stopProcessEvent = 0;
+	_argc = 0;
+	_argv = 0;
 }
 
 Thread::~Thread(){
@@ -298,6 +304,7 @@ Exception::Exception(const ExceptionType type, const int exNo, const string& mes
 	_exNo = exNo;
 	_fileName = 0;
 	_functionName = 0;
+	_line = 0;
 }
 
 Exception::Exception(const ExceptionType type, const int exNo, const string& message,

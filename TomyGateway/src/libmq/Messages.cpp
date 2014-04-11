@@ -664,6 +664,9 @@ void MQTTSnPublish::absorb(MQTTSnMessage* src){
          Class MQTTSnPubAck
  ======================================*/
 MQTTSnPubAck::MQTTSnPubAck(){
+	_topicId = 0;
+	_msgId = 0;
+	_returnCode = 0;
     setMessageLength(7);
     setType(MQTTSN_TYPE_PUBACK);
     allocate();
@@ -912,6 +915,7 @@ void MQTTSnUnsubscribe::absorb(MQTTSnMessage* src){
          Class MQTTSnUnSubAck
   ======================================*/
 MQTTSnUnsubAck::MQTTSnUnsubAck(){
+	_msgId = 0;
     setMessageLength(4);
     setType(MQTTSN_TYPE_UNSUBACK);
     allocate();
@@ -1199,6 +1203,7 @@ MQTTPingResp::~MQTTPingResp(){
 MQTTConnAck::MQTTConnAck(){
 	_type = MQTT_TYPE_CONNACK;
 	_remainLength = 2;
+	_returnCd = 0;
 }
 
 MQTTConnAck::~MQTTConnAck(){

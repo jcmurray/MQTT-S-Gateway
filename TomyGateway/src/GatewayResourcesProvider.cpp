@@ -37,6 +37,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 using namespace std;
 
@@ -81,6 +82,7 @@ ClientNode::ClientNode(){
 	_msgId = 0;
 	_snMsgId = 0;
 	_status = Cstat_Disconnected;
+	_keepAliveMsec = 0;
 	_topics = new Topics();
 
 	_address64 = XBeeAddress64();
@@ -91,6 +93,7 @@ ClientNode::ClientNode(){
 
 	_waitedPubAck = 0;
 	_waitedSubAck = 0;
+
 }
 
 ClientNode::~ClientNode(){
@@ -343,29 +346,34 @@ ClientList::~ClientList(){
 
 void ClientList::authorize(const char* fname){
 	FILE* fp;
-	char buf[256];
-	char hex[9];
+	char buf[258];
+	size_t pos;
 
 	if((fp = fopen(fname, "r")) != NULL){
 		while(fgets(buf, 256, fp) != NULL){
-			char* cam = strpbrk(buf, ",");
-			if((cam - buf) == 16){
-				*cam = 0;
-				strncpy(hex, buf, 8);
-				unsigned long val = strtoul(hex,NULL,16);
+			string data = string(buf);
+			while((pos = data.find_first_of(" 　\t\n")) != string::npos){
+				data.erase(pos, 1);
+			}
+			if(data.empty()){
+				continue;
+			}
+			pos = data.find_first_of(",");
+			string addr = data.substr(0,pos);
+			if(addr.size() == 16){
 				unsigned long msb, lsb;
+				char hex[9];
+				strncpy(hex,addr.c_str(),8);
+				unsigned long val = strtoul(hex,NULL,16);
 				setLong((uint8_t*)&msb, val);
-				val = strtoul(buf + 8,NULL,16);
+				val = strtoul(addr.c_str() + 8,NULL,16);
 				setLong((uint8_t*)&lsb, val);
 				XBeeAddress64 addr64 = XBeeAddress64(msb, lsb);
-				string id = string(cam + 1);
-				unsigned int pos = id.find("\n",0);
-				if( pos != string::npos){
-					id.replace(pos,1, "");
-				}
+
+				string id = data.substr(pos + 1);
 				createNode(&addr64,&id);
 			}else{
-				D_MQTT("Invalid address %s  ID=%s\n",buf, cam+1);
+				D_MQTT("Invalid address     %s\n",data.c_str());
 			}
 		}
 		fclose(fp);
