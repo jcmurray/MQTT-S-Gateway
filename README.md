@@ -74,8 +74,16 @@ RaspberryPi instalation
       	Raspberry IP address is asigned by DHCP.  
 *  Change gw password. (gw can use sudo command) 
       	root's password is root.
-*  Invoke Gateway 
-    [gw@MQTT-SnGateway01~]$ ./TomyGateway 1 /dev/ttyAMA0 85.119.83.194 1883
+*  Invoke Gateway   
+        Invoked automatically by systemd.    
+        How to stop the automatical invoke.         
+        > sudo systemctl disable tomygateway.service  
+        How to start the gateway by manual operation.
+        > ./TomyGateway.sh    
+        or     
+        > ./TomyGatewaySilent.sh    
+        
+        check the shell script for more information     
     	IP address 85.119.83.194 is test.mosquito.org.
 
   
