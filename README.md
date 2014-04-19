@@ -55,7 +55,7 @@ RaspberryPi instalation
 ----------------------
 ####1)  Prepare Bootup SD card  
 *  Download img.zip file from    
-   ![dl](https://github.com/TomoakiYAMAGUCHI/MQTT-S-Gateway)  
+   (https://github.com/TomoakiYAMAGUCHI/MQTT-S-Gateway  
    
 *  Unzip archilinux-mqtt-sn-gateway4RaspberryPi.img.zip  
 *  Copy img file to SD card (4GB)  
@@ -73,13 +73,13 @@ RaspberryPi instalation
     $ ssh 'RaspberryPi IP Address' -p 22022 -l gw  
       	password is gw.  
       	Raspberry IP address is asigned by DHCP.  
-*  Change gw password. (gw can use sudo command) 
+*  Change gw password. (gw can use sudo command)   
       	root's password is root.
 *  Invoke Gateway   
         Invoked automatically by systemd.    
         How to stop the automatical invoke.         
         > sudo systemctl disable tomygateway.service  
-        How to start the gateway by manual operation.
+        How to start the gateway by manual operation.    
         > ./TomyGateway.sh    
         or     
         > ./TomyGatewaySilent.sh    
