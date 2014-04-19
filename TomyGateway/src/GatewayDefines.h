@@ -58,7 +58,7 @@
 
 #define TIMEOUT_PERIOD     10    //  10 sec = 10 sec
 
-#define SEND_UNIXTIME_PERIOD  3600   // 3600 sec = 1 hour
+#define SEND_UNIXTIME_PERIOD  911   // 911 sec = 15 min 11 sec
 
 
 
