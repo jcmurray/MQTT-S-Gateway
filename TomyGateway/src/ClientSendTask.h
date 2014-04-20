@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/10/13
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 #ifndef CLIENTSENDTASK_H_

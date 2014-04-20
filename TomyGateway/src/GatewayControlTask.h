@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/02
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -50,6 +50,7 @@ public:
 private:
 	EventQue<Event>* _eventQue;
 	GatewayResourcesProvider* _res;
+	char _printBuf[512];
 
 	void handleClientMessage(Event*);
 	void handleBrokerMessage(Event*);
@@ -71,6 +72,9 @@ private:
 	void handleUnsuback(Event* ev, ClientNode* clnode, MQTTMessage* msg);
 	void handleConnack(Event* ev, ClientNode* clnode, MQTTMessage* msg);
 	void handlePublish(Event* ev, ClientNode* clnode, MQTTMessage* msg);
+	void handleDisconnect(Event* ev, ClientNode* clnode, MQTTMessage* msg);
+	char* msgPrint(MQTTSnMessage* msg);
+	char* msgPrint(MQTTMessage* msg);
 };
 
 #endif /* GATEWAYCONTROLTASK_H_ */

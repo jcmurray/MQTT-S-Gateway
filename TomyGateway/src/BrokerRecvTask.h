@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/03
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -45,9 +45,11 @@ public:
 	BrokerRecvTask(GatewayResourcesProvider* res);
 	~BrokerRecvTask();
 	void run();
+	char* msgPrint(uint8_t* buf, MQTTMessage* msg);
 private:
 	void recvAndFireEvent(ClientNode*);
 	GatewayResourcesProvider* _res;
+	char _printBuf[SOCKET_MAXBUFFER_LENGTH * 5];
 };
 
 

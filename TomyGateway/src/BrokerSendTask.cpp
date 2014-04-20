@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/03
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -65,11 +65,11 @@ void BrokerSendTask::run(){
 
 	int port = BROKER_PORT;
 
-	if(_res->getArgc() > 2){
-		host = _res->getArgv()[2];
+	if(_res->getArgc() > ARGV_BROKER_ADDR){
+		host = _res->getArgv()[ARGV_BROKER_ADDR];
 	}
-	if(_res->getArgc() > 3){
-		port = atoi(_res->getArgv()[3]);
+	if(_res->getArgc() > ARGV_BROKER_PORT){
+		port = atoi(_res->getArgv()[ARGV_BROKER_PORT]);
 	}
 
 	while(true){
@@ -83,58 +83,84 @@ void BrokerSendTask::run(){
 		srcMsg = clnode->getBrokerSendMessage();
 
 		if(srcMsg->getType() == MQTT_TYPE_PUBLISH){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBLISH\n");
 			MQTTPublish* msg = static_cast<MQTTPublish*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s PUBLISH      --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PUBACK){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PUBACK\n");
 			MQTTPubAck* msg = static_cast<MQTTPubAck*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s PUBACK       --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_PINGREQ){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_PINGREQ\n");
 			MQTTPingReq* msg = static_cast<MQTTPingReq*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s PINGREQ      --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_SUBSCRIBE){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_SUBSCRIBE\n");
 			MQTTSubscribe* msg = static_cast<MQTTSubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s SUBSCRIBE    --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_UNSUBSCRIBE){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_UNSUBSCRIBE\n");
 			MQTTUnsubscribe* msg = static_cast<MQTTUnsubscribe*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s UNSUBSCRIBE  --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_CONNECT){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_CONNECT\n");
 			MQTTConnect* msg = static_cast<MQTTConnect*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s CONNECT      --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
 		else if(srcMsg->getType() == MQTT_TYPE_DISCONNECT){
-			D_MQTT("BrokerSendTask acquire MQTT_TYPE_DISCONNECT\n");
 			MQTTDisconnect* msg = static_cast<MQTTDisconnect*>(srcMsg);
 			length = msg->serialize(buffer);
+			D_MQTT("%s DISCONNECT   --->    Broker    %s\n", currentDateTime(), msgPrint(buffer,msg));
 		}
+
+		int rc = 0;
 
 		if(length > 0){
 			if( clnode->getSocket()->isValid()){
-				clnode->getSocket()->send(buffer, length);
+				rc = clnode->getSocket()->send(buffer, length);
+				if(rc == -1){
+					clnode->getSocket()->disconnect();
+					D_MQTT("       Socket is valid. but can't send Client:%s\n", clnode->getNodeId()->c_str());
+				}
 			}else{
-				clnode->getSocket()->create();
-				if(clnode->getSocket()->connect(host, port)){
-					clnode->getSocket()->send(buffer, length);
+				if(clnode->getSocket()->create()){
+					if(clnode->getSocket()->connect(host, port)){
+						rc = clnode->getSocket()->send(buffer, length);
+						if(rc == -1){
+							clnode->getSocket()->disconnect();
+							D_MQTT("       Socket is created. but can't send, Client:%s\n", clnode->getNodeId()->c_str());
+						}
+					}else{
+						D_MQTT("%s Can't connect socket Client:%s\n",
+								currentDateTime(), clnode->getNodeId()->c_str());
+					}
 				}else{
-					D_MQTT("%s Can't connect socket Client:%s\n",
-							currentDateTime(), clnode->getNodeId()->c_str());
+					D_MQTT("%s Can't create socket Client:%s\n",
+						currentDateTime(), clnode->getNodeId()->c_str());
 				}
 			}
 		}
-
 		delete ev;
 	}
-
 }
 
+
+char*  BrokerSendTask::msgPrint(uint8_t* buffer, MQTTMessage* msg){
+	char* buf = _printBuf;
+
+	sprintf(buf, " %02X", *buffer);
+	buf += 3;
+
+	for(int i = 0; i < msg->getRemainLength(); i++){
+		sprintf(buf, " %02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
+		buf += 3;
+	}
+	*buf = 0;
+	return _printBuf;
+}
 

@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/13
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 #include "ClientSendTask.h"
@@ -52,28 +53,27 @@ ClientSendTask::~ClientSendTask(){
 
 void ClientSendTask::run(){
 
-	MQTTSnMessage* msg = new MQTTSnMessage();
-
-	if(_sp.begin(_res->getArgv()[1], B57600, O_WRONLY) == -1){
+	if(_sp.begin(_res->getArgv()[ARGV_DEVICE_NAME], B57600, O_WRONLY) == -1){
 		THROW_EXCEPTION(ExFatal, ERRNO_SYS_02, "can't open device.");  // ABORT
 	}
 
 	_zb.setSerialPort(&_sp);
 
 	while(true){
-
 		Event* ev = _res->getClientSendQue()->wait();
 
 		if(ev->getEventType() == EtClientSend){
+			MQTTSnMessage msg = MQTTSnMessage();
 			ClientNode* clnode = ev->getClientNode();
-			msg->absorb( clnode->getClientSendMessage() );
+			msg.absorb( clnode->getClientSendMessage() );
 
 			_zb.unicast(clnode->getAddress64Ptr(), clnode->getAddress16(),
-					msg->getMessagePtr(), msg->getMessageLength());
+					msg.getMessagePtr(), msg.getMessageLength());
 
 		}else if(ev->getEventType() == EtBroadcast){
-			msg->absorb( ev->getMqttSnMessage() );
-			_zb.broadcast(msg->getMessagePtr(), msg->getMessageLength());
+			MQTTSnMessage msg = MQTTSnMessage();
+			msg.absorb( ev->getMqttSnMessage() );
+			_zb.broadcast(msg.getMessagePtr(), msg.getMessageLength());
 		}
 		delete ev;
 	}

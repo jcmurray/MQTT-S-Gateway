@@ -27,7 +27,7 @@
  *
  *  Created on: 2013/11/07
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -42,10 +42,10 @@
 #define MQTTSN_TOPIC_SINGLE_WILDCARD  '+'
 
 #define MQTTSN_TOPICID_NORMAL 256
-#define MQTTSN_TOPICID_PREDEFINED_TIME  0x0001
-#define MQTTSN_TOPIC_PREDEFINED_TIME ("PDEF/01")
+#define MQTTSN_TOPICID_PREDEFINED_TIME   0x0001
+#define MQTTSN_TOPIC_PREDEFINED_TIME     ("$GW/01")
 
-#define MAX_TOPIC_COUNT   20        // Number of Topic Par ClientNode
+#define MAX_TOPIC_COUNT   50        // Number of Topic Par ClientNode
 
 /*=====================================
         Class Topic
@@ -54,19 +54,19 @@
 class Topic {
 public:
     Topic();
-    Topic(UTFString topic);
+    Topic(string topic);
     ~Topic();
     uint16_t  getTopicId();
     uint8_t   getTopicLength();
-    UTFString*  getTopicName();
+    string*  getTopicName();
     void     setTopicId(uint16_t id);
-    void     setTopicName(UTFString topic);
+    void     setTopicName(string topic);
 
     uint8_t isWildCard(uint8_t* pos);
     bool    isMatch(Topic* wildCard);
 private:
     uint16_t  _topicId;
-    UTFString _topicStr;
+    string _topicStr;
 };
 
 /*=====================================
@@ -76,16 +76,17 @@ class Topics {
 public:
       Topics();
       ~Topics();
-      uint16_t  createTopic(UTFString* topic);
-      uint16_t  getTopicId(UTFString* topic);
+      uint16_t  createTopic(string* topic);
+      uint16_t  getTopicId(string* topic);
       uint16_t  getNextTopicId();
-      Topic*    getTopic(UTFString* topic);
+      Topic*    getTopic(string* topic);
       Topic*    getTopic(uint16_t topicId);
-      Topic*    match(UTFString* topic);
-      bool     deleteTopic(UTFString* topic);
+      Topic*    match(string* topic);
+      bool     deleteTopic(string* topic);
 
 private:
     uint16_t _nextTopicId;
+    uint8_t  _cnt;
     vector<Topic*>  _topics;
 
 };

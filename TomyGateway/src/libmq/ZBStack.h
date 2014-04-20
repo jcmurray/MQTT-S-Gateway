@@ -29,9 +29,10 @@
  * If not, see <http://www.gnu.org/licenses/>.
  *
  * 
- *  Created on: 2013/06/17
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -110,6 +111,7 @@ public:
 	uint32_t getLsb();
 	void setMsb(uint32_t msb);
 	void setLsb(uint32_t lsb);
+	bool operator==(XBeeAddress64&);
 private:
 	uint32_t _msb;
 	uint32_t _lsb;

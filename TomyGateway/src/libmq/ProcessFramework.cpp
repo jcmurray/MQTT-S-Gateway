@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/25
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -91,14 +92,18 @@ void setLong(uint8_t* pos, uint32_t val){
     *pos   =  val & 0xff;
 }
 
+void utfSerialize(uint8_t* pos, string str){
+	setUint16(pos, (uint16_t)str.size());
+	str.copy((char*)pos + 2, str.size(), 0);
+}
 
-char theCurrentTime[20];
+char theCurrentTime[32];
 
 char* currentDateTime() {
     time_t     now = time(0);
     struct tm  tstruct;
     tstruct = *localtime(&now);
-    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y-%m-%d %X", &tstruct);
+    strftime(theCurrentTime, sizeof(theCurrentTime), "%Y%m%d %H%M%S   ", &tstruct);
     return theCurrentTime;
 }
 
@@ -107,6 +112,8 @@ char* currentDateTime() {
   ======================================*/
 MultiTaskProcess::MultiTaskProcess(){
 	theMultiTask = this;
+	_argc = 0;
+	_argv = 0;
 }
 
 MultiTaskProcess::~MultiTaskProcess(){
@@ -161,6 +168,10 @@ char** MultiTaskProcess::getArgv(){
  =====================================*/
 Thread::Thread(){
 	_stopProcessEvent = theMultiTask->getStopProcessEvent();
+	_threadID = 0;
+	_stopProcessEvent = 0;
+	_argc = 0;
+	_argv = 0;
 }
 
 Thread::~Thread(){
@@ -293,6 +304,7 @@ Exception::Exception(const ExceptionType type, const int exNo, const string& mes
 	_exNo = exNo;
 	_fileName = 0;
 	_functionName = 0;
+	_line = 0;
 }
 
 Exception::Exception(const ExceptionType type, const int exNo, const string& message,

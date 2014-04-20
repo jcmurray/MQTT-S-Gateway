@@ -26,8 +26,9 @@
  * 
  * 
  *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -153,8 +154,6 @@
 #define MQTTSN_ERR_ACK_TIMEOUT       -10
 #define MQTTSN_ERR_PINGRESP_TIMEOUT  -11
 
-#define MQTTS_TOPICID_PREDEFINED_TIME  0x0001
-#define MQTTS_TOPIC_PREDEFINED_TIME ("PDEF/01")
 
 #include "ZBStack.h"
 #include "ProcessFramework.h"
@@ -162,27 +161,6 @@
 
 using namespace std;
 using namespace tomyGateway;
-
-/*=====================================
-        Class UTFString
- =====================================*/
-class UTFString : public string {
-public:
-	UTFString();
-	UTFString(const char* str);
-	UTFString(const string& s);
-	UTFString(uint8_t* pos);
-	~UTFString();
-	UTFString& operator=(const string& str);
-	UTFString& operator=(UTFString ustr);
-	bool operator==(UTFString& str);
-	bool operator!=(UTFString& str);
-
-	void serialize(uint8_t *pos);
-	uint8_t getByteLength();
-	uint8_t size();
-};
-
 
 /*=====================================
         Class MQTTSnMessage
@@ -201,7 +179,6 @@ public:
     uint8_t getBodyLength();
     bool getMessage(uint8_t pos, uint8_t& val);
     uint8_t* getMessagePtr();
-    void reset();
 
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);
@@ -259,16 +236,16 @@ private:
 class MQTTSnConnect : public MQTTSnMessage {
 public:
 	MQTTSnConnect();
-    MQTTSnConnect(UTFString* id);
+    MQTTSnConnect(string* id);
     ~MQTTSnConnect();
 
     void setFlags(uint8_t flg);
     void setDuration(uint16_t msec);
-    void setClientId(UTFString id);
+    void setClientId(string id);
 
     uint8_t getFlags();
     uint16_t getDuration();
-    UTFString* getClientId();
+    string* getClientId();
     bool isCleanSession();
     bool isWillRequired();
 
@@ -276,7 +253,7 @@ public:
     void absorb(XBResponse* src);
 
 private:
-    UTFString _clientId;
+    string _clientId;
  };
 
 /*=====================================
@@ -313,8 +290,8 @@ public:
     MQTTSnWillTopic();
     ~MQTTSnWillTopic();
     void setFlags(uint8_t flags);
-    void setWillTopic(UTFString* topic);
-    UTFString* getWillTopic();
+    void setWillTopic(string* topic);
+    string* getWillTopic();
     uint8_t getQos();
     bool isWillRequired();
 
@@ -323,7 +300,7 @@ public:
 
 private:
     uint8_t _flags;
-    UTFString _topicName;
+    string _topicName;
  };
 
 /*=====================================
@@ -345,14 +322,14 @@ class MQTTSnWillMsg : public MQTTSnMessage  {
 public:
     MQTTSnWillMsg();
     ~MQTTSnWillMsg();
-    void setWillMsg(UTFString* msg);
-    UTFString* getWillMsg();
+    void setWillMsg(string* msg);
+    string* getWillMsg();
 
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);
 
 private:
-    UTFString _willMsg;
+    string _willMsg;
  };
 
 /*=====================================
@@ -366,17 +343,17 @@ public:
     uint16_t getTopicId();
     void setMsgId(uint16_t msgId);
     uint16_t getMsgId();
-    void setTopicName(UTFString* topicName);
+    void setTopicName(string* topicName);
     void setFrame(uint8_t* data, uint8_t len);
     void setFrame(XBResponse* resp);
-    UTFString* getTopicName();
+    string* getTopicName();
 
     void absorb(MQTTSnMessage* src);
     void absorb(XBResponse* src);
 private:
     uint16_t _topicId;
     uint16_t _msgId;
-    UTFString _topicName;
+    string _topicName;
 
  };
 
@@ -409,7 +386,9 @@ public:
     void setFlags(uint8_t flags);
     uint8_t getFlags();
     void setTopicId(uint16_t id);
+    void setTopic(string* topic);
     uint16_t getTopicId();
+    string*  getTopic(string* str);
     uint8_t  getTopicType();
     uint8_t  getQos();
 	void     setQos(uint8_t);
@@ -469,8 +448,8 @@ public:
     uint16_t getTopicId();
     uint8_t  getQos();
 	void     setQos(uint8_t);
-    void setTopicName(UTFString* topicName);
-    UTFString* getTopicName();
+    void setTopicName(string* topicName);
+    string* getTopicName();
     void setTopicId(uint16_t predefinedId);
 	void setFrame(uint8_t* data, uint8_t len);
 	void setFrame(XBResponse* resp);
@@ -482,7 +461,7 @@ protected:
     uint16_t _topicId;
     uint8_t  _flags;
     uint16_t _msgId;
-    UTFString _topicName;
+    string _topicName;
  };
 
 /*=====================================
@@ -508,7 +487,7 @@ private:
 	uint8_t  _flags;
 	uint16_t _msgId;
 	uint8_t  _returnCode;
-	UTFString _topicName;
+	string _topicName;
  };
 
  /*=====================================
@@ -519,7 +498,7 @@ public:
     MQTTSnUnsubscribe();
     ~MQTTSnUnsubscribe();
     void setFlags(uint8_t flags);
-    UTFString* getTopicName();
+    string* getTopicName();
     uint16_t  getTopicId();
     void absorb(XBResponse* src);
     void absorb(MQTTSnMessage* src);
@@ -547,9 +526,9 @@ private:
 class MQTTSnPingReq : public MQTTSnMessage  {
 public:
 	MQTTSnPingReq();
-    MQTTSnPingReq(UTFString* id);
+    MQTTSnPingReq(string* id);
     ~MQTTSnPingReq();
-    void setClientId(UTFString* id);
+    void setClientId(string* id);
     char* getClientId();
 
     void absorb(XBResponse* src);
@@ -616,6 +595,7 @@ public:
 	uint8_t getType();
 	uint8_t getQos();   // QOS0 = 0, QOS1 = 1
 	uint16_t getRemainLength();
+	uint8_t getRemainLengthSize();
 	bool isDup();
 	bool isRetain();
 	uint16_t serialize(uint8_t* buf);
@@ -632,6 +612,18 @@ protected:
 	uint8_t _flags;
 	uint16_t _remainLength;
 	uint16_t _messageId;
+
+	uint8_t* _payload;
+
+	string _userName;
+	string _password;
+	string _willTopic;
+	string _willMessage;
+	string _clientId;
+
+	string _topic;
+
+
 };
 
 
@@ -696,7 +688,6 @@ public:
 	~MQTTUnsubAck();
 	void setMessageId(uint16_t);
 	uint16_t getMessageId();
-	void serialize(uint8_t* buf);
 };
 
 /*=====================================
@@ -726,9 +717,9 @@ public:
 	void setMessageId(uint16_t);
 	uint16_t getMessageId();
 	uint16_t serialize(uint8_t* buf);
-	void setTopicName(UTFString*);
+	void setTopicName(string*);
 private:
-	UTFString _topic;
+	//string _topic;
 };
 
 /*=====================================
@@ -741,9 +732,9 @@ public:
 	void setMessageId(uint16_t);
 	uint16_t getMessageId();
 	uint16_t serialize(uint8_t* buf);
-	void setTopic(UTFString* topic, uint8_t qos);
+	void setTopic(string* topic, uint8_t qos);
 private:
-	UTFString _topic;
+	//string _topic;
 	uint8_t _qos;
 };
 
@@ -754,23 +745,23 @@ class MQTTConnect : public MQTTMessage{
 public:
 	MQTTConnect();
 	~MQTTConnect();
-	void setUserName(UTFString*);
-	void setPassword(UTFString*);
+	void setUserName(string*);
+	void setPassword(string*);
 	void setKeepAliveTime(uint16_t);
-	void setWillMessage(UTFString*);
-	void setWillTopic(UTFString*);
+	void setWillMessage(string*);
+	void setWillTopic(string*);
 	void setWillQos(uint8_t);
-	void setClientId(UTFString*);
+	void setClientId(string*);
 	void setCleanSessionFlg();
 	uint16_t serialize(uint8_t* buf);
 private:
 	uint8_t _connectFlags;
 	uint16_t _keepAliveTime;
-	UTFString _userName;
-	UTFString _password;
-	UTFString _willTopic;
-	UTFString _willMessage;
-	UTFString _clientId;
+	//string _userName;
+	//string _password;
+	//string _willTopic;
+	//string _willMessage;
+	//string _clientId;
 };
 
 /*=====================================
@@ -783,16 +774,15 @@ public:
 	void setMessageId(uint16_t);
 	uint16_t getMessageId();
 	void setPayload(uint8_t*, uint8_t);
-	void setTopic(UTFString*);
-	UTFString* getTopic();
+	void setTopic(string*);
+	string* getTopic();
 	uint8_t* getPayload();
 	uint8_t  getPayloadLength();
 	uint16_t serialize(uint8_t* buf);
 	bool deserialize(uint8_t* buf);
 
 private:
-	UTFString _topic;
-	uint8_t* _payload;
+	//string _topic;
 	uint8_t _len;
 };
 

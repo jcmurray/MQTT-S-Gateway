@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/13
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -39,6 +40,13 @@
 #include "libmq/Socket.h"
 #include "libmq/Topics.h"
 
+#define ARGV_GATEWAY_ID  1
+#define ARGV_DEVICE_NAME 2
+#define ARGV_BROKER_ADDR 3
+#define ARGV_BROKER_PORT 4
+
+
+#define FILE_NAME_CLIENT_LIST "config/clientList.conf"
 /*=====================================
         Class MessageQue
  =====================================*/
@@ -96,6 +104,7 @@ public:
 
 	void checkTimeover();
 	void updateStatus(MQTTSnMessage*);
+	void updateStatus(ClientStatus);
 	uint16_t getNextMessageId();
 	uint8_t getNextSnMsgId();
 	Topics* getTopics();
@@ -103,12 +112,13 @@ public:
 	Socket* getSocket();
 	XBeeAddress64* getAddress64Ptr();
 	uint16_t  getAddress16();
-	UTFString* getNodeId();
+	string* getNodeId();
 	void setMsb(uint32_t);
 	void setLsb(uint32_t);
 	void setAddress16(uint16_t addr);
 	void setAddress64(XBeeAddress64* addr);
-	void setNodeId(UTFString* id);
+	void setTopics(Topics* topics);
+	void setNodeId(string* id);
 
 
 
@@ -132,10 +142,11 @@ private:
 	uint16_t _keepAliveMsec;
 	Timer _keepAliveTimer;
 
-    XBeeAddress64 _address64;
     uint16_t _address16;
 	Socket _socket;
-    UTFString _nodeId;
+
+	XBeeAddress64 _address64;
+    string _nodeId;
 };
 
 /*=====================================
@@ -145,16 +156,17 @@ class ClientList{
 public:
 	ClientList();
 	~ClientList();
+	void authorize(const char* fileName);
 	void erase(ClientNode*);
-	ClientNode* getClient(uint16_t address16);
-	ClientNode* createNode(XBeeAddress64* addr64, uint16_t addr16);
+	ClientNode* getClient(XBeeAddress64* addr64);
+	ClientNode* createNode(XBeeAddress64* addr64, string* nodeId = NULL);
 	uint16_t getClientCount();
 	ClientNode* operator[](int);
 private:
 	vector<ClientNode*>*  _clientVector;
 	Mutex _mutex;
 	uint16_t _clientCnt;
-
+	bool _authorize;
 };
 
 /*=====================================

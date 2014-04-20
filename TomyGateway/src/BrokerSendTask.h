@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/03
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -44,8 +44,10 @@ public:
 	BrokerSendTask(GatewayResourcesProvider* res);
 	~BrokerSendTask();
 	void run();
+	char* msgPrint(uint8_t* buffer, MQTTMessage* msg);
 private:
 	GatewayResourcesProvider* _res;
+	char _printBuf[SOCKET_MAXBUFFER_LENGTH * 5];
 };
 
 

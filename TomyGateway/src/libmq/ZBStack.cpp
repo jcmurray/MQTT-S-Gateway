@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  *
- *  Created on: 2013/11/24
- *  Author:     Tomoaki YAMAGUCHI
- *  Version:    0.1.0
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
+ *      Author: Tomoaki YAMAGUCHI
+ *     Version: 2.0.0
  *
  */
 
@@ -78,16 +79,30 @@ void XBeeAddress64::setLsb(uint32_t lsb){
   _lsb = lsb;
 }
 
+bool XBeeAddress64::operator==(XBeeAddress64& addr){
+	if(_msb == addr.getMsb() && _lsb == addr.getLsb()){
+		return true;
+	}else{
+		return false;
+	}
+}
 /*=========================================
              Class XBResponse
  =========================================*/
 XBResponse::XBResponse(){
-  reset();
+	_frameDataPtr = 0;
+	_msbLength = 0;
+	_lsbLength = 0;
+	_checksum = 0;
+	_frameLength = 0;
+	_errorCode = NO_ERROR;
+	_complete = false;
+	_apiId = 0;
 }
 
 XBResponse::~XBResponse(){
   if(_frameDataPtr){
-	  delete _frameDataPtr;
+	  free(_frameDataPtr);
   }
 }
 
@@ -159,12 +174,15 @@ void XBResponse::setApiId(uint8_t apiId){
 }
 
 void XBResponse::reset(){
-  _msbLength = 0;
-  _lsbLength = 0;
-  _checksum = 0;
-  _frameLength = 0;
-  _errorCode = NO_ERROR;
-  _complete = false;
+	if(_frameDataPtr){
+		  free(_frameDataPtr);
+	}
+	_msbLength = 0;
+	_lsbLength = 0;
+	_checksum = 0;
+	_frameLength = 0;
+	_errorCode = NO_ERROR;
+_complete = false;
 }
 
 uint8_t XBResponse::getPayload(int index){
@@ -209,6 +227,9 @@ bool XBResponse::isBroadcast(){
 }
 
 void XBResponse::absorb(XBResponse* resp){
+	if(_frameDataPtr){
+		free(_frameDataPtr);
+	}
 	_apiId = resp->getApiId();
 	_msbLength = resp->getMsbLength();
 	_lsbLength = resp->getLsbLength();
@@ -228,6 +249,11 @@ void XBResponse::absorb(XBResponse* resp){
 
 XBRequest::XBRequest(){
 	_apiId = 0x10;
+	_addr16 = 0;
+	_broadcastRadius = 0;
+	_option = 0;
+	_payloadPtr = 0;
+	_payloadLength = 0;
 }
 
 
@@ -339,12 +365,11 @@ XBee::XBee(){
 	_checksumTotal = 0;
 	_response.setFrameData(mqcalloc(MAX_FRAME_DATA_SIZE));
 	_serialPort = 0;
+	_bd = 0;
 }
 
 XBee::~XBee(){
-	if(_serialPort != 0){
-		delete(_serialPort);
-	}
+
 }
 
 void XBee::readPacket(){
@@ -385,7 +410,7 @@ void XBee::readPacket(){
 		case 2:
 		  _response.setLsbLength(_bd);
 		  _pos++;
-		  D_ZBEESTACK( " ===> Start: length=%d", _response.getPacketLength() );
+		  D_ZBEESTACK("\r\n===> Recv start: ");
 		  break;
 		case 3:
 		  _response.setApiId(_bd);
@@ -412,7 +437,7 @@ void XBee::readPacket(){
 			  buf[_pos - 4] = _bd;
 			  _pos++;
 			  if (_response.getApiId() == XB_RX_RESPONSE && _pos == 15){
-				  D_ZBEESTACK( "\n Payload ==> ");
+				  D_ZBEESTACK( "\r\n     Payload: ");
 			  }
 		  }
 		  break;
@@ -421,16 +446,17 @@ void XBee::readPacket(){
 }
 
 bool XBee::receiveResponse(XBResponse* response){
+
     while(true){
     	readPacket();
 
         if(_response.isAvailable()){
-        	D_ZBEESTACK("<== CheckSum OK\n" );
+        	D_ZBEESTACK("\r\n<=== CheckSum OK\r\n\n");
 			response->absorb(&_response);
             return true;
 
         }else if(_response.isError()){
-        	D_ZBEESTACK("  <== Packet Error Code = %d\n", _response.getErrorCode() );
+        	D_ZBEESTACK("\r\n<=== Packet Error Code = %d\r\n\n",_response.getErrorCode());
 			_response.reset();
 			response->reset();
             return false;
@@ -441,10 +467,11 @@ bool XBee::receiveResponse(XBResponse* response){
 
 void XBee::setSerialPort(SerialPort *serialPort){
     _serialPort = serialPort;
-    _serialPort->flush();
 }
 
 void XBee::sendRequest(XBRequest &request){
+	D_ZBEESTACK("\r\n===> Send start: ");
+
 	sendByte(START_BYTE, false);
 
 	uint8_t msbLen = ((request.getFrameDataLength() + 1) >> 8) & 0xff; // 1 = 1B(Api)  except Checksum
@@ -459,7 +486,7 @@ void XBee::sendRequest(XBRequest &request){
 
 	for( int i = 0; i < request.getFrameDataLength(); i++ ){
 	  if (request.getApiId() == XB_TX_REQUEST && i == 13){
-		  D_ZBEESTACK( "\n Payload ==> ");
+		  D_ZBEESTACK("\r\n     Payload:    ");
 	  }
 	  sendByte(request.getFrameData(i), true);
 	  checksum+= request.getFrameData(i);
@@ -467,9 +494,9 @@ void XBee::sendRequest(XBRequest &request){
 	checksum = 0xff - checksum;
 	sendByte(checksum, true);
 
-	flush();  // clear receive buffer
+	//flush();  // clear receive buffer
 
-	D_ZBEESTACK("\n" );
+	D_ZBEESTACK("\r\n<=== Send completed\r\n\n" );
 }
 
 void XBee::sendByte(uint8_t b, bool escape){
@@ -596,7 +623,7 @@ bool SerialPort::send(unsigned char b){
 	if (write(_fd, &b,1) != 1){
 	    return false;
 	}else{
-		D_ZBEESTACK( " S:0x%x", b);
+		D_ZBEESTACK( " 0x%x", b);
 	    return true;
 	}
 }
@@ -605,7 +632,7 @@ bool SerialPort::recv(unsigned char* buf){
 	if(read(_fd, buf, 1) == 0){
 	    return false;
 	}else{
-		D_ZBEESTACK( " R:0x%x",buf[0] );
+		D_ZBEESTACK( " 0x%x",buf[0] );
 	    return true;
 	}
 }

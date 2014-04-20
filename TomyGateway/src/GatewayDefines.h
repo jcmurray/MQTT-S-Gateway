@@ -27,17 +27,13 @@
  * 
  *  Created on: 2013/11/08
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
 #ifndef GATEWAYDEFINES_H_
 #define GATEWAYDEFINES_H_
 
-
-/*============================================
- *  Debug Condition
- ============================================*/
 
 #define DEBUG_MQTT
 
@@ -57,15 +53,14 @@
 #define BROKER_HOST_NAME  "localhost"
 #define BROKER_PORT       1883
 
-#define KEEP_ALIVE_TIME   900000    // 900000 msec = 15 min
 
-#define TIMEOUT_PERIOD     10000    //  10000 msec = 10 sec
+#define KEEP_ALIVE_TIME   900    // 900 sec = 15 min
 
-#define SEND_UNIXTIME_PERIOD  360000   // 360000 msec = 1 hour
+#define TIMEOUT_PERIOD     10    //  10 sec = 10 sec
+
+#define SEND_UNIXTIME_PERIOD  911   // 911 sec = 15 min 11 sec
 
 
-
-#define GATEWAY_ID        1
 
 #define MAX_CLIENT_NODES  500
 

@@ -27,7 +27,7 @@
  * 
  *  Created on: 2013/11/03
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 1.0.0
  *
  */
 
@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+extern char* currentDateTime();
 
 BrokerRecvTask::BrokerRecvTask(GatewayResourcesProvider* res){
 	_res = res;
@@ -59,7 +60,7 @@ void BrokerRecvTask::run(){
 
 	ClientList* clist = _res->getClientList();
 	fd_set readfds;
-	int sock;
+	int sockfd;
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -69,11 +70,11 @@ void BrokerRecvTask::run(){
 		for( int i = 0; i < clist->getClientCount(); i++){
 			if((*clist)[i]){
 				if((*clist)[i]->getSocket()->isValid()){
-					sock = (*clist)[i]->getSocket()->getSock();
-					FD_SET(sock, &readfds);
+					sockfd = (*clist)[i]->getSocket()->getSock();
+					FD_SET(sockfd, &readfds);
 
-					if(sock > maxSock){
-						maxSock = sock;
+					if(sockfd > maxSock){
+						maxSock = sockfd;
 					}
 				}
 			}else{
@@ -88,8 +89,8 @@ void BrokerRecvTask::run(){
 			for( int i = 0; i < clist->getClientCount(); i++){
 				if((*clist)[i]){
 					if((*clist)[i]->getSocket()->isValid()){
-						int sock = (*clist)[i]->getSocket()->getSock();
-						if(FD_ISSET(sock, &readfds)){
+						int sockfd = (*clist)[i]->getSocket()->getSock();
+						if(FD_ISSET(sockfd, &readfds)){
 
 							recvAndFireEvent((*clist)[i]);
 						}
@@ -108,6 +109,7 @@ void BrokerRecvTask::run(){
  -----------------------------------------*/
 void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
+	uint8_t sbuff[SOCKET_MAXBUFFER_LENGTH * 5];
 	uint8_t buffer[SOCKET_MAXBUFFER_LENGTH];
 	memset(buffer, 0, SOCKET_MAXBUFFER_LENGTH);
 
@@ -115,62 +117,64 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 
 	int recvLength = clnode->getSocket()->recv(packet, SOCKET_MAXBUFFER_LENGTH);
 
+	if (recvLength == -1){
+		D_MQTT(" Client : %s Broker Connection Error\n", clnode->getNodeId()->c_str());
+		clnode->updateStatus(Cstat_Disconnected);
+	}
+
 	while(recvLength > 0){
 
-		switch(*packet & 0xf0){
-			case MQTT_TYPE_PUBACK:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PUBACK  packetLength=%d\n",recvLength);
+		if((*packet & 0xf0) == MQTT_TYPE_PUBACK){
+			MQTTPubAck* puback = new MQTTPubAck();
+			puback->deserialize(packet);
+			puback->serialize(sbuff);
+			D_MQTT("%s PUBACK       <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, puback));
 
-				MQTTPubAck* puback = new MQTTPubAck();
-				puback->deserialize(packet);
-				clnode->setBrokerRecvMessage(puback);
-				break;
-			}
-			case MQTT_TYPE_PUBLISH:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PUBLISH  packetLength=%d\n",recvLength);
+			clnode->setBrokerRecvMessage(puback);
 
-				MQTTPublish* publish = new MQTTPublish();
-				publish->deserialize(packet);
-				clnode->setBrokerRecvMessage(publish);
-				break;
-			}
-			case MQTT_TYPE_SUBACK:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_SUBACK  packetLength=%d\n",recvLength);
+		}else if((*packet & 0xf0) == MQTT_TYPE_PUBLISH){
+			MQTTPublish* publish = new MQTTPublish();
+			publish->deserialize(packet);
+			publish->serialize(sbuff);
+			D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, publish));
 
-				MQTTSubAck* suback = new MQTTSubAck();
-				suback->deserialize(packet);
-				clnode->setBrokerRecvMessage(suback);
-				break;
-			}
-			case MQTT_TYPE_PINGRESP:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_PINGRESP  packetLength=%d\n",recvLength);
+			clnode->setBrokerRecvMessage(publish);
 
-				MQTTPingResp* pingresp = new MQTTPingResp();
-				pingresp->deserialize(packet);
-				clnode->setBrokerRecvMessage(pingresp);
-				break;
-			}
-			case MQTT_TYPE_UNSUBACK:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_UNSUBACK  packetLength=%d\n",recvLength);
+		}else if((*packet & 0xf0) == MQTT_TYPE_SUBACK){
+			MQTTSubAck* suback = new MQTTSubAck();
+			suback->deserialize(packet);
+			suback->serialize(sbuff);
+			D_MQTT("%s SUBACK       <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, suback));
 
-				MQTTUnsubAck* unsuback = new MQTTUnsubAck();
-				unsuback->deserialize(packet);
-				clnode->setBrokerRecvMessage(unsuback);
-				break;
-			}
-			case MQTT_TYPE_CONNACK:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_CONNACK  packetLength=%d\n",recvLength);
+			clnode->setBrokerRecvMessage(suback);
 
-				MQTTConnAck* connack = new MQTTConnAck();
-				connack->deserialize(packet);
-				clnode->setBrokerRecvMessage(connack);
-				break;
-			}
-			default:{
-				D_MQTT("\nBrokerRecvTask acquires MQTT_TYPE_UNKOWN  packetLength=%d\n",recvLength);
-				return;
-				break;
-			}
+		}else if((*packet & 0xf0) == MQTT_TYPE_PINGRESP){
+			MQTTPingResp* pingresp = new MQTTPingResp();
+			pingresp->deserialize(packet);
+			pingresp->serialize(sbuff);
+			D_MQTT("%s PINGRESP     <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, pingresp));
+
+			clnode->setBrokerRecvMessage(pingresp);
+
+		}else if((*packet & 0xf0) == MQTT_TYPE_UNSUBACK){
+			MQTTUnsubAck* unsuback = new MQTTUnsubAck();
+			unsuback->deserialize(packet);
+			unsuback->serialize(sbuff);
+			D_MQTT("%s UNSUBACK     <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, unsuback));
+
+			clnode->setBrokerRecvMessage(unsuback);
+
+		}else if((*packet & 0xf0) == MQTT_TYPE_CONNACK){
+			MQTTConnAck* connack = new MQTTConnAck();
+			connack->deserialize(packet);
+			connack->serialize(sbuff);
+			D_MQTT("%s CONNACK      <---    Broker    %s\n", currentDateTime(), msgPrint(sbuff, connack));
+
+			clnode->setBrokerRecvMessage(connack);
+
+		}else{
+			D_MQTT("%s UNKOWN_TYPE  packetLength=%d\n",currentDateTime(), recvLength);
+			return;
 		}
 
 		Event* ev = new Event();
@@ -185,3 +189,17 @@ void BrokerRecvTask::recvAndFireEvent(ClientNode* clnode){
 	}
 }
 
+
+char*  BrokerRecvTask::msgPrint(uint8_t* buffer, MQTTMessage* msg){
+	char* buf = _printBuf;
+
+	sprintf(buf, " %02X", *buffer);
+	buf += 3;
+
+	for(int i = 0; i < msg->getRemainLength(); i++){
+		sprintf(buf, " %02X", *( buffer + 1 + msg->getRemainLengthSize() + i));
+		buf += 3;
+	}
+	*buf = 0;
+	return _printBuf;
+}

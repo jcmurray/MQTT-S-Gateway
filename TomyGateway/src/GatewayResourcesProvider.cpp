@@ -25,19 +25,25 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/10/13
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 #include "GatewayResourcesProvider.h"
 #include "GatewayDefines.h"
 #include "libmq/ProcessFramework.h"
 #include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <string>
 
 using namespace std;
 
 extern Process* theProcess;
+extern char* currentDateTime();
+extern void setLong(uint8_t* pos, uint32_t val);
 
 GatewayResourcesProvider* theGatewayResources = NULL;
 
@@ -50,7 +56,7 @@ GatewayResourcesProvider::GatewayResourcesProvider(): MultiTaskProcess(){
 }
 
 GatewayResourcesProvider::~GatewayResourcesProvider(){
-
+	D_MQTT("%s TomyGateway stop\n", currentDateTime());
 }
 
 EventQue<Event>* GatewayResourcesProvider::getGatewayEventQue(){
@@ -76,20 +82,31 @@ ClientNode::ClientNode(){
 	_msgId = 0;
 	_snMsgId = 0;
 	_status = Cstat_Disconnected;
+	_keepAliveMsec = 0;
 	_topics = new Topics();
 
 	_address64 = XBeeAddress64();
+	_nodeId = "";
 	_address16 = 0;
 
 	_mqttConnect = 0;
 
 	_waitedPubAck = 0;
 	_waitedSubAck = 0;
+
 }
 
 ClientNode::~ClientNode(){
-	_socket.disconnect();
 	delete _topics;
+	if(_mqttConnect){
+		delete _mqttConnect;
+	}
+	if(_waitedPubAck){
+		delete _waitedPubAck;
+	}
+	if(_waitedSubAck){
+		delete _waitedSubAck;
+	}
 }
 
 void ClientNode::setWaitedPubAck(MQTTSnPubAck* msg){
@@ -186,6 +203,10 @@ void ClientNode::setKeepAlive(MQTTSnMessage* msg){
 	_keepAliveTimer.start(_keepAliveMsec * 1.5);
 }
 
+void ClientNode::updateStatus(ClientStatus stat){
+	_status = stat;
+}
+
 void ClientNode::updateStatus(MQTTSnMessage* msg){
 	if(((_status == Cstat_Disconnected) || (_status == Cstat_Lost)) && 
          msg->getType() == MQTTSN_TYPE_CONNECT){
@@ -273,7 +294,7 @@ uint16_t ClientNode::getAddress16(){
     return _address16;
 }
 
-UTFString* ClientNode::getNodeId(){
+string* ClientNode::getNodeId(){
     return &_nodeId;
 }
 
@@ -294,10 +315,13 @@ void ClientNode::setAddress16(uint16_t addr){
     _address16 = addr;
 }
 
-void ClientNode::setNodeId(UTFString* id){
-	_nodeId = *id;
+void ClientNode::setNodeId(string* id){
+	_nodeId.append(*id);
 }
 
+void ClientNode::setTopics(Topics* topics){
+	_topics = topics;
+}
 
 
 /*=====================================
@@ -307,38 +331,79 @@ ClientList::ClientList(){
 	_clientVector = new vector<ClientNode*>();
 	_clientVector->reserve(MAX_CLIENT_NODES);
 	_clientCnt = 0;
+	_authorize = false;
 }
 
 ClientList::~ClientList(){
 	_mutex.lock();
 	vector<ClientNode*>::iterator client = _clientVector->begin();
 	while((!_clientVector->empty()) && *client){
-		delete(*client);
+		delete *client;
 		_clientVector->erase(client);
 	}
 	_mutex.unlock();
 }
 
-ClientNode* ClientList::createNode(XBeeAddress64* addr64, uint16_t addr16){
-	if(_clientCnt < MAX_CLIENT_NODES){
+void ClientList::authorize(const char* fname){
+	FILE* fp;
+	char buf[258];
+	size_t pos;
+
+	if((fp = fopen(fname, "r")) != NULL){
+		while(fgets(buf, 256, fp) != NULL){
+			string data = string(buf);
+			while((pos = data.find_first_of(" 　\t\n")) != string::npos){
+				data.erase(pos, 1);
+			}
+			if(data.empty()){
+				continue;
+			}
+			pos = data.find_first_of(",");
+			string addr = data.substr(0,pos);
+			if(addr.size() == 16){
+				unsigned long msb, lsb;
+				char hex[9];
+				strncpy(hex,addr.c_str(),8);
+				unsigned long val = strtoul(hex,NULL,16);
+				setLong((uint8_t*)&msb, val);
+				val = strtoul(addr.c_str() + 8,NULL,16);
+				setLong((uint8_t*)&lsb, val);
+				XBeeAddress64 addr64 = XBeeAddress64(msb, lsb);
+
+				string id = data.substr(pos + 1);
+				createNode(&addr64,&id);
+			}else{
+				D_MQTT("Invalid address     %s\n",data.c_str());
+			}
+		}
+		fclose(fp);
+		_authorize = true;
+		D_MQTT("Clients are authorized.\n");
+	}
+}
+
+ClientNode* ClientList::createNode(XBeeAddress64* addr64, string* nodeId){
+	if(_clientCnt < MAX_CLIENT_NODES && !_authorize){
 		_mutex.lock();
 		vector<ClientNode*>::iterator client = _clientVector->begin();
 		while( client != _clientVector->end()){
-			if((*client)->getAddress16() == addr16){
+			if((*client)->getAddress64Ptr() == addr64){
 				return NULL;
 			}else{
 				++client;
 			}
 		}
 		ClientNode* node = new ClientNode();
-		node->setAddress16(addr16);
 		node->setAddress64(addr64);
+		if (nodeId){
+			node->setNodeId(nodeId);
+		}
 		_clientVector->push_back(node);
 		_clientCnt++;
 		_mutex.unlock();
 		return node;
 	}else{
-		return NULL;
+		return getClient(addr64);
 	}
 }
 
@@ -365,11 +430,11 @@ void ClientList::erase(ClientNode* clnode){
 	_mutex.unlock();
 }
 
-ClientNode* ClientList::getClient(uint16_t address16){
+ClientNode* ClientList::getClient(XBeeAddress64* addr64){
 	_mutex.lock();
 	vector<ClientNode*>::iterator client = _clientVector->begin();
 	while( (client != _clientVector->end()) && *client){
-			if((*client)->getAddress16() == address16){
+			if(*((*client)->getAddress64Ptr()) == *addr64){
 				_mutex.unlock();
 				return *client;
 			}else{

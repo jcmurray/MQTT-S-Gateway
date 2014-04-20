@@ -25,9 +25,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  * 
- *  Created on: 2013/11/02
+ *  Created on: 2013/10/19
+ *  Updated on: 2014/03/20
  *      Author: Tomoaki YAMAGUCHI
- *     Version: 0.1.0
+ *     Version: 2.0.0
  *
  */
 
@@ -39,9 +40,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
+#include <time.h>
 
 
 extern char* currentDateTime();
+extern uint16_t getUint16(uint8_t* pos);
 
 /*=====================================
         Class GatewayControlTask
@@ -49,6 +52,7 @@ extern char* currentDateTime();
 GatewayControlTask::GatewayControlTask(GatewayResourcesProvider* res){
 	_res = res;
 	_res->attach(this);
+	_eventQue = 0;
 }
 
 GatewayControlTask::~GatewayControlTask(){
@@ -62,8 +66,10 @@ void GatewayControlTask::run(){
 
 	_eventQue = _res->getGatewayEventQue();
 
-	advertiseTimer.start(KEEP_ALIVE_TIME);
-	sendUnixTimer.start(SEND_UNIXTIME_PERIOD);
+	advertiseTimer.start(KEEP_ALIVE_TIME * 1000UL);
+	sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000UL);
+
+		D_MQTT("%s TomyGateway start\n", currentDateTime());
 
 	while(true){
 
@@ -84,12 +90,13 @@ void GatewayControlTask::run(){
 			/*------ Check Keep Alive Timer & send Advertise ------*/
 			if(advertiseTimer.isTimeup()){
 				MQTTSnAdvertise* adv = new MQTTSnAdvertise();
-				adv->setGwId(GATEWAY_ID);
-				adv->setDuration(KEEP_ALIVE_TIME / 1000);
-				Event* ev = new Event();
-				ev->setEvent(adv);
-				_res->getClientSendQue()->post(ev);
-				advertiseTimer.start(KEEP_ALIVE_TIME);
+				adv->setGwId(atoi(_res->getArgv()[ARGV_GATEWAY_ID]));
+				adv->setDuration(KEEP_ALIVE_TIME);
+				Event* ev1 = new Event();
+				ev1->setEvent(adv);  //broadcast
+				D_MQTT("\n%s ADVERTISE    <---    Broker    %s\n", currentDateTime(), msgPrint(adv));
+				_res->getClientSendQue()->post(ev1);
+				advertiseTimer.start(KEEP_ALIVE_TIME * 1000UL);
 			}
 
 			/*------ Check Timer & send UixTime ------*/
@@ -97,30 +104,33 @@ void GatewayControlTask::run(){
 				MQTTSnPublish* msg = new MQTTSnPublish();
 				long int tm = time(NULL);
 
-				msg->setTopicId(MQTTS_TOPICID_PREDEFINED_TIME);
-				msg->setTopicIdType(1);
+				msg->setTopicId(MQTTSN_TOPICID_PREDEFINED_TIME);
+				msg->setTopicIdType(MQTTSN_TOPIC_TYPE_PREDEFINED);
 				msg->setData((uint8_t*)&tm, sizeof(long int));
 				msg->setQos(0);
-				msg->setTopicIdType(1);
 
-				Event* ev = new Event();
-				ev->setEvent(msg);
-				_res->getClientSendQue()->post(ev);
-				sendUnixTimer.start(SEND_UNIXTIME_PERIOD);
+				Event* ev1 = new Event();
+				ev1->setEvent(msg);
+				D_MQTT("\n%s PUBLISH      <---    Broker    %s\n", currentDateTime(), msgPrint(msg));
+				_res->getClientSendQue()->post(ev1);
+				sendUnixTimer.start(SEND_UNIXTIME_PERIOD * 1000UL);
 			}
 		}
 
 		/*------   Check  SEARCHGW & send GWINFO      ---------*/
 		else if(ev->getEventType() == EtBroadcast){
 			MQTTSnMessage* msg = ev->getMqttSnMessage();
+			D_MQTT("\n%s SERCHGW      <---    Client    %s\n", currentDateTime(), msgPrint(msg));
 
 			if(msg->getType() == MQTTSN_TYPE_SEARCHGW){
 				MQTTSnGwInfo* gwinfo = new MQTTSnGwInfo();
-				gwinfo->setGwId(GATEWAY_ID);
-				Event* ev = new Event();
-				ev->setEvent(gwinfo);
-				_res->getClientSendQue()->post(ev);
+				gwinfo->setGwId(atoi(_res->getArgv()[ARGV_GATEWAY_ID]));
+				Event* ev1 = new Event();
+				ev1->setEvent(gwinfo);
+				D_MQTT("%s GWINFO       --->    Client    %s\n", currentDateTime(), msgPrint(gwinfo));
+				_res->getClientSendQue()->post(ev1);
 			}
+
 		}
 		
 		/*------   Message form Clients      ---------*/
@@ -130,48 +140,29 @@ void GatewayControlTask::run(){
 			MQTTSnMessage* msg = clnode->getClientRecvMessage();
 			
 			if(msg->getType() == MQTTSN_TYPE_PUBLISH){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBLISH\n");
 				handleSnPublish(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_SUBSCRIBE){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_SUBSCRIBE\n");
 				handleSnSubscribe(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_UNSUBSCRIBE){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_UNSUBSCRIBE\n");
 				handleSnUnsubscribe(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_PINGREQ){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PINGREQ\n");
 				handleSnPingReq(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_PUBACK){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_PUBACK\n");
 				handleSnPubAck(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_CONNECT){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_CONNECT\n");
 				handleSnConnect(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_WILLTOPIC){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_WILLTOPIC\n");
 				handleSnWillTopic(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_WILLMSG){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_WILLMSG\n");
 				handleSnWillMsg(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_DISCONNECT){
-				D_MQTT( "GatewayControlTask acquire MQTTSN_TYPE_DISCONNECT\n");
 				handleSnDisconnect(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTTSN_TYPE_REGISTER){
-				D_MQTT("GatewayControlTask acquire MQTTSN_TYPE_REGISTER\n");
 				handleSnRegister(ev, clnode, msg);
-
 			}else{
 				D_MQTT("%s   Irregular ClientRecvMessage\n", currentDateTime());
 			}
+
 		}
 		/*------   Message form Broker      ---------*/
 		else if(ev->getEventType() == EtBrokerRecv){
@@ -180,28 +171,19 @@ void GatewayControlTask::run(){
 			MQTTMessage* msg = clnode->getBrokerRecvMessage();
 			
 			if(msg->getType() == MQTT_TYPE_PUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PUBACK\n");
 				handlePuback(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTT_TYPE_PINGRESP){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PINGRESP\n");
 				handlePingresp(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTT_TYPE_SUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_SUBACK\n");
 				handleSuback(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTT_TYPE_UNSUBACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_UNSUBACK\n");
 				handleUnsuback(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTT_TYPE_CONNACK){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_CONNACK\n");
 				handleConnack(ev, clnode, msg);
-
 			}else if(msg->getType() == MQTT_TYPE_PUBLISH){
-				D_MQTT("GatewayControlTask acquire MQTT_TYPE_PUBLISH\n");
 				handlePublish(ev, clnode, msg);
+			}else if(msg->getType() == MQTT_TYPE_DISCONNECT){
+				handleDisconnect(ev, clnode, msg);
 			}else{
 				D_MQTT("%s   Irregular BrokerRecvMessage\n", currentDateTime());
 			}
@@ -220,22 +202,28 @@ void GatewayControlTask::run(){
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
-	Topics* topics = clnode->getTopics();
+	D_MQTT("\n%s PUBLISH      <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
 	MQTTSnPublish* sPublish = new MQTTSnPublish();
 	MQTTPublish* mqMsg = new MQTTPublish();
 	sPublish->absorb(msg);
 
-	mqMsg->setTopic(topics->getTopic(sPublish->getTopicId())->getTopicName());
-
 	Topic* tp = clnode->getTopics()->getTopic(sPublish->getTopicId());
 
-	if(tp){
-		mqMsg->setTopic(tp->getTopicName());
-
+	if(tp || ((sPublish->getFlags() && MQTTSN_TOPIC_TYPE) == MQTTSN_TOPIC_TYPE_SHORT)){
+		if(tp){
+			mqMsg->setTopic(tp->getTopicName());
+		}else{
+			string str;
+			mqMsg->setTopic(sPublish->getTopic(&str));
+		}
 		if(sPublish->getMsgId()){
 			MQTTSnPubAck* sPuback = new MQTTSnPubAck();
 			sPuback->setMsgId(sPublish->getMsgId());
 			sPuback->setTopicId(sPublish->getTopicId());
+			if(clnode->getWaitedPubAck()){
+				delete clnode->getWaitedPubAck();
+			}
 			clnode->setWaitedPubAck(sPuback);
 
 			mqMsg->setMessageId(sPublish->getMsgId());
@@ -268,11 +256,10 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
 
 			Event* ev1 = new Event();
 			ev1->setClientSendEvent(clnode);
+			D_MQTT("%s PUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sPuback));
 			_res->getClientSendQue()->post(ev1);  // Send PubAck INVALID_TOPIC_ID
-
 		}
 	}
-
 	delete sPublish;
 }
 
@@ -280,6 +267,8 @@ void GatewayControlTask::handleSnPublish(Event* ev, ClientNode* clnode, MQTTSnMe
                 Upstream MQTTSnSubscribe
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
+
+	D_MQTT("\n%s SUBSCRIBE    <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
 
 	MQTTSnSubscribe* sSubscribe = new MQTTSnSubscribe();
 	MQTTSubscribe* subscribe = new MQTTSubscribe();
@@ -298,67 +287,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 	subscribe->setQos(sSubscribe->getQos());
 
 	if(topicIdType != MQTTSN_FLAG_TOPICID_TYPE_RESV){
-		/*----- TopicName ------*/
-		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_SHORT){
-			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
-
-			uint16_t tpId;
-			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicName());
-
-			if (tp){
-				tpId = tp->getTopicId();
-			}else{
-				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName());
-			}
-
-			if(sSubscribe->getMsgId()){
-				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-				sSuback->setMsgId(sSubscribe->getMsgId());
-				sSuback->setTopicId(tpId);
-				clnode->setWaitedSubAck(sSuback);
-			}
-
-			clnode->setBrokerSendMessage(subscribe);
-			Event* ev1 = new Event();
-			ev1->setBrokerSendEvent(clnode);
-			_res->getBrokerSendQue()->post(ev1);
-		}
-		/*----- TopicId ------*/
-		else if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_NORMAL){
-
-			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicId());
-
-			if(tp){
-				subscribe->setTopic(tp->getTopicName(), sSubscribe->getQos());
-
-				if(sSubscribe->getMsgId()){
-					MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-					sSuback->setMsgId(sSubscribe->getMsgId());
-					sSuback->setTopicId(tp->getTopicId());
-					clnode->setWaitedSubAck(sSuback);
-					clnode->setBrokerSendMessage(subscribe);
-				}
-
-				Event* ev1 = new Event();
-				ev1->setBrokerSendEvent(clnode);
-				_res->getBrokerSendQue()->post(ev1);       // Send MQTTSubscribe
-
-			}else{
-				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
-				sSuback->setMsgId(sSubscribe->getMsgId());
-				sSuback->setReturnCode(MQTTSN_RC_REJECTED_INVALID_TOPIC_ID);
-				clnode->setClientSendMessage(sSuback);
-
-				Event* evregack = new Event();
-				evregack->setClientSendEvent(clnode);
-				_res->getClientSendQue()->post(evregack);  // Send SubAck Response
-
-				delete sSubscribe;
-				delete subscribe;
-				return;
-			}
-
-		}else{
+		if(topicIdType == MQTTSN_FLAG_TOPICID_TYPE_PREDEFINED){
 			/*----- Predefined TopicId ------*/
 			MQTTSnSubAck* sSuback = new MQTTSnSubAck();
 
@@ -377,6 +306,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 
 				Event* evsuback = new Event();
 				evsuback->setClientSendEvent(clnode);
+				D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
 				_res->getClientSendQue()->post(evsuback);
 			}
 
@@ -390,6 +320,7 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 				char payload[sizeof(long int)];
 				memcpy(payload, &tm, sizeof(long int));
 				pub->setData((unsigned char*)payload, sizeof(long int));
+				D_MQTT("%s PUBLISH      --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(pub));
 				clnode->setClientSendMessage(pub);
 
 				Event *evpub = new Event();
@@ -397,9 +328,31 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 				_res->getClientSendQue()->post(evpub);
 			}
 			delete subscribe;
+		}else{
+			uint16_t tpId;
+
+			Topic* tp = clnode->getTopics()->getTopic(sSubscribe->getTopicName());
+			if (tp){
+				tpId = tp->getTopicId();
+			}else{
+				tpId = clnode->getTopics()->createTopic(sSubscribe->getTopicName());
+			}
+
+			subscribe->setTopic(sSubscribe->getTopicName(), sSubscribe->getQos());
+			if(sSubscribe->getMsgId()){
+				MQTTSnSubAck* sSuback = new MQTTSnSubAck();
+				sSuback->setMsgId(sSubscribe->getMsgId());
+				sSuback->setTopicId(tpId);
+				clnode->setWaitedSubAck(sSuback);
+			}
+
+			clnode->setBrokerSendMessage(subscribe);
+			Event* ev1 = new Event();
+			ev1->setBrokerSendEvent(clnode);
+			_res->getBrokerSendQue()->post(ev1);
+			delete sSubscribe;
+			return;
 		}
-		delete sSubscribe;
-		return;
 
 	}else{
 		/*-- Irregular TopicIdType --*/
@@ -413,10 +366,11 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
 
 			Event* evun = new Event();
 			evun->setClientSendEvent(clnode);
+			D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sSuback));
 			_res->getClientSendQue()->post(evun);  // Send SUBACK to Client
 		}
+		delete subscribe;
 	}
-	delete subscribe;
 	delete sSubscribe;
 }
 
@@ -424,8 +378,10 @@ void GatewayControlTask::handleSnSubscribe(Event* ev, ClientNode* clnode, MQTTSn
                 Upstream MQTTSnUnsubscribe
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnUnsubscribe(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
-	
-MQTTSnUnsubscribe* sUnsubscribe = new MQTTSnUnsubscribe();
+
+	D_MQTT("\n%s UNSUBSCRIBE  <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
+	MQTTSnUnsubscribe* sUnsubscribe = new MQTTSnUnsubscribe();
 	MQTTUnsubscribe* unsubscribe = new MQTTUnsubscribe();
 	sUnsubscribe->absorb(msg);
 
@@ -464,6 +420,7 @@ uslbl1:
 
 		Event* evun = new Event();
 		evun->setClientSendEvent(clnode);
+		D_MQTT("%s UNSUBACK     --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(sUnsuback));
 		_res->getClientSendQue()->post(evun);  // Send UNSUBACK to Client
 	}
 
@@ -474,6 +431,8 @@ uslbl1:
                 Upstream MQTTSnPingReq
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnPingReq(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
+
+	D_MQTT("\n%s PINGREQ      <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
 
 	MQTTPingReq* pingReq = new MQTTPingReq();
 
@@ -488,6 +447,8 @@ void GatewayControlTask::handleSnPingReq(Event* ev, ClientNode* clnode, MQTTSnMe
                 Upstream MQTTSnPubAck
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnPubAck(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
+
+	D_MQTT("%s PUBACK       <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
 
 	MQTTSnPubAck* sPubAck = new MQTTSnPubAck();
 	MQTTPubAck* pubAck = new MQTTPubAck();
@@ -507,22 +468,25 @@ void GatewayControlTask::handleSnPubAck(Event* ev, ClientNode* clnode, MQTTSnMes
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
+	D_MQTT("\n%s CONNECT      <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
 	Topics* topics = clnode->getTopics();
 	MQTTSnConnect* sConnect = new MQTTSnConnect();
 	MQTTConnect* mqMsg = new MQTTConnect();
 	sConnect->absorb(msg);
 
-	mqMsg->setClientId(sConnect->getClientId());
+	mqMsg->setClientId(clnode->getNodeId());
 	mqMsg->setKeepAliveTime(sConnect->getDuration());
 
 	// ToDo: UserName & Password setting
-
 	clnode->setConnectMessage(mqMsg);
 
 	if(sConnect->isCleanSession()){
 		if(topics){
 			delete topics;
 		}
+		topics = new Topics();
+		clnode->setTopics(topics);
 		mqMsg->setCleanSessionFlg();
 	}
 
@@ -533,6 +497,7 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
 
 		clnode->setClientSendMessage(reqTopic);
 		evwr->setClientSendEvent(clnode);
+		D_MQTT("%s WILLTOPICREQ --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(reqTopic));
 		_res->getClientSendQue()->post(evwr);  // Send WILLTOPICREQ to Client
 	}else{
 		Event* ev1 = new Event();
@@ -548,18 +513,23 @@ void GatewayControlTask::handleSnConnect(Event* ev, ClientNode* clnode, MQTTSnMe
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnWillTopic(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
+	D_MQTT("%s WILLTOPIC    <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
 	MQTTSnWillTopic* snMsg = new MQTTSnWillTopic();
 	MQTTSnWillMsgReq* reqMsg = new MQTTSnWillMsgReq();
 	snMsg->absorb(msg);
 
-	clnode->getConnectMessage()->setWillTopic(snMsg->getWillTopic());
-	clnode->getConnectMessage()->setWillQos(snMsg->getQos());
+	if(clnode->getConnectMessage()){
+		clnode->getConnectMessage()->setWillTopic(snMsg->getWillTopic());
+		clnode->getConnectMessage()->setWillQos(snMsg->getQos());
 
-	clnode->setClientSendMessage(reqMsg);
+		clnode->setClientSendMessage(reqMsg);
 
-	Event* evt = new Event();
-	evt->setClientSendEvent(clnode);
-	_res->getClientSendQue()->post(evt);  // Send WILLMSGREQ to Client
+		Event* evt = new Event();
+		evt->setClientSendEvent(clnode);
+		D_MQTT("%s WILLMSGREQ   --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(reqMsg));
+		_res->getClientSendQue()->post(evt);  // Send WILLMSGREQ to Client
+	}
 	delete snMsg;
 }
 
@@ -568,16 +538,32 @@ void GatewayControlTask::handleSnWillTopic(Event* ev, ClientNode* clnode, MQTTSn
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnWillMsg(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
+	D_MQTT("%s WILLMSG      <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
 	MQTTSnWillMsg* snMsg = new MQTTSnWillMsg();
 	snMsg->absorb(msg);
 
-	clnode->getConnectMessage()->setWillMessage(snMsg->getWillMsg());
+	if(clnode->getConnectMessage()){
+		clnode->getConnectMessage()->setWillMessage(snMsg->getWillMsg());
 
-	clnode->setBrokerSendMessage(clnode->getConnectMessage());
+		clnode->setBrokerSendMessage(clnode->getConnectMessage());
+		clnode->setConnectMessage(NULL);
 
-	Event* ev1 = new Event();
-	ev1->setBrokerSendEvent(clnode);
-	_res->getBrokerSendQue()->post(ev1);
+		Event* ev1 = new Event();
+		ev1->setBrokerSendEvent(clnode);
+		_res->getBrokerSendQue()->post(ev1);
+
+	}else{
+		MQTTSnConnack* connack = new MQTTSnConnack();
+		connack->setReturnCode(MQTTSN_RC_REJECTED_CONGESTION);
+
+		clnode->setClientSendMessage(connack);
+		Event* ev1 = new Event();
+		ev1->setClientSendEvent(clnode);
+		D_MQTT("%s*CONNACK      --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(connack));
+		_res->getClientSendQue()->post(ev1);  // Send CONNACK REJECTED CONGESTION to Client
+
+	}
 	delete snMsg;
 }
 
@@ -585,6 +571,8 @@ void GatewayControlTask::handleSnWillMsg(Event* ev, ClientNode* clnode, MQTTSnMe
                 Upstream MQTTSnDisconnect
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnDisconnect(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
+
+	D_MQTT("\n%sDISCONNECT   <---    %s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
 
 	MQTTSnDisconnect* snMsg = new MQTTSnDisconnect();
 	MQTTDisconnect* mqMsg = new MQTTDisconnect();
@@ -605,6 +593,8 @@ void GatewayControlTask::handleSnDisconnect(Event* ev, ClientNode* clnode, MQTTS
  -------------------------------------------------------*/
 void GatewayControlTask::handleSnRegister(Event* ev, ClientNode* clnode, MQTTSnMessage* msg){
 
+	D_MQTT("\n%s REGISTER     <---    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(msg));
+
 	MQTTSnRegister* snMsg = new MQTTSnRegister();
 	MQTTSnRegAck* respMsg = new MQTTSnRegAck();
 	snMsg->absorb(msg);
@@ -620,6 +610,7 @@ void GatewayControlTask::handleSnRegister(Event* ev, ClientNode* clnode, MQTTSnM
 
 	Event* evrg = new Event();
 	evrg->setClientSendEvent(clnode);
+	D_MQTT("%s REGACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(respMsg));
 	_res->getClientSendQue()->post(evrg);
 
 	delete snMsg;
@@ -639,15 +630,14 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 	MQTTSnPubAck* snMsg = clnode->getWaitedPubAck();
 
 	if(snMsg){
-		if(snMsg->getMsgId() != mqMsg->getMessageId()){
-			delete snMsg;
-			return;
+		D_MQTT("%s PUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
+		if(snMsg->getMsgId() == mqMsg->getMessageId()){
+			clnode->setWaitedPubAck(NULL);
+			clnode->setClientSendMessage(snMsg);
+			Event* ev1 = new Event();
+			ev1->setClientSendEvent(clnode);
+			_res->getClientSendQue()->post(ev1);
 		}
-
-		clnode->setClientSendMessage(snMsg);
-		Event* ev1 = new Event();
-		ev1->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(ev1);
 	}
 }
 
@@ -657,7 +647,8 @@ void GatewayControlTask::handlePuback(Event* ev, ClientNode* clnode, MQTTMessage
 void GatewayControlTask::handlePingresp(Event* ev, ClientNode* clnode, MQTTMessage* msg){
 
 	MQTTSnPingResp* snMsg = new MQTTSnPingResp();
-
+	//MQTTPingResp* mqMsg = static_cast<MQTTPingResp*>(msg);
+	D_MQTT("%s PINGRESP     --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
 	Event* ev1 = new Event();
@@ -673,19 +664,17 @@ void GatewayControlTask::handleSuback(Event* ev, ClientNode* clnode, MQTTMessage
 	MQTTSubAck* mqMsg = static_cast<MQTTSubAck*>(msg);
 	MQTTSnSubAck* snMsg = clnode->getWaitedSubAck();
 	if(snMsg){
-		if(snMsg->getMsgId() != mqMsg->getMessageId()){
-			delete snMsg;
-			return;
-		}else{
+		if(snMsg->getMsgId() == mqMsg->getMessageId()){
+			clnode->setWaitedSubAck(NULL);
 			snMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
 			snMsg->setQos(mqMsg->getGrantedQos());
+			D_MQTT("%s SUBACK       --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
+			clnode->setClientSendMessage(snMsg);
+
+			Event* ev1 = new Event();
+			ev1->setClientSendEvent(clnode);
+			_res->getClientSendQue()->post(ev1);
 		}
-
-		clnode->setClientSendMessage(snMsg);
-
-		Event* ev1 = new Event();
-		ev1->setClientSendEvent(clnode);
-		_res->getClientSendQue()->post(ev1);
 	}
 }
 
@@ -698,7 +687,7 @@ void GatewayControlTask::handleUnsuback(Event* ev, ClientNode* clnode, MQTTMessa
 	MQTTSnUnsubAck* snMsg = new MQTTSnUnsubAck();
 
 	snMsg->setMsgId(mqMsg->getMessageId());
-
+	D_MQTT("%s UNSUBACK     --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
 	Event* ev1 = new Event();
@@ -720,9 +709,22 @@ void GatewayControlTask::handleConnack(Event* ev, ClientNode* clnode, MQTTMessag
 	}else{
 		snMsg->setReturnCode(MQTTSN_RC_ACCEPTED);
 	}
-
+	D_MQTT("%s CONNACK      --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	clnode->setClientSendMessage(snMsg);
 
+	Event* ev1 = new Event();
+	ev1->setClientSendEvent(clnode);
+	_res->getClientSendQue()->post(ev1);
+}
+
+/*-------------------------------------------------------
+                Downstream MQTTConnAck
+ -------------------------------------------------------*/
+void GatewayControlTask::handleDisconnect(Event* ev, ClientNode* clnode, MQTTMessage* msg){
+	MQTTSnDisconnect* snMsg = new MQTTSnDisconnect();
+	//MQTTDisconnect* mqMsg = static_cast<MQTTDisconnect*>(msg);
+	clnode->setClientSendMessage(snMsg);
+	D_MQTT("%s DISCONNECT   --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
@@ -736,21 +738,25 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 	MQTTPublish* mqMsg = static_cast<MQTTPublish*>(msg);
 	MQTTSnPublish* snMsg = new MQTTSnPublish();
 
-	UTFString* tp = mqMsg->getTopic();
+	string* tp = mqMsg->getTopic();
 	uint16_t tpId;
 
-	tpId = clnode->getTopics()->getTopicId(tp);
-
+	if(tp->size() == 2){
+		tpId = getUint16((uint8_t*)tp);
+		snMsg->setFlags(MQTTSN_TOPIC_TYPE_SHORT);
+	}else{
+		tpId = clnode->getTopics()->getTopicId(tp);
+		snMsg->setFlags(MQTTSN_TOPIC_TYPE_NORMAL);
+	}
 	if(tpId == 0){
 		/* ----- may be a publish message response of subscribed with '#' or '+' -----*/
 		tpId = clnode->getTopics()->createTopic(tp);
-		D_MQTT("GatewayControlTask Create Topic   TopicName= %s  TopicId= %d\n", tp->c_str(),tpId);
 
 		if(tpId > 0){
 			MQTTSnRegister* regMsg = new MQTTSnRegister();
 			regMsg->setTopicId(tpId);
 			regMsg->setTopicName(tp);
-
+			D_MQTT("%s REGISTER     --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(regMsg));
 			clnode->setClientSendMessage(regMsg);
 			Event* evrg = new Event();
 			evrg->setClientSendEvent(clnode);
@@ -774,10 +780,34 @@ void GatewayControlTask::handlePublish(Event* ev, ClientNode* clnode, MQTTMessag
 		snMsg->setDup();
 	}
 	clnode->setClientSendMessage(snMsg);
-
+	D_MQTT("%s PUBLISH      --->    %-10s%s\n", currentDateTime(), clnode->getNodeId()->c_str(), msgPrint(snMsg));
 	Event* ev1 = new Event();
 	ev1->setClientSendEvent(clnode);
 	_res->getClientSendQue()->post(ev1);
 
+}
+
+char*  GatewayControlTask::msgPrint(MQTTSnMessage* msg){
+
+	char* buf = _printBuf;
+	for(int i = 0; i < msg->getBodyLength(); i++){
+		sprintf(buf," %02X", *(msg->getBodyPtr() + i));
+		buf += 3;
+	}
+	*buf = 0;
+	return _printBuf;
+}
+
+char*  GatewayControlTask::msgPrint(MQTTMessage* msg){
+	uint8_t sbuf[512];
+	char* buf = _printBuf;
+	msg->serialize(sbuf);
+
+	for(int i = 0; i < msg->getRemainLength(); i++){
+		sprintf(buf, " %02X", *( sbuf + msg->getRemainLengthSize() + i));
+		buf += 3;
+	}
+	*buf = 0;
+	return _printBuf;
 }
 
